@@ -1,0 +1,105 @@
+﻿# ====================
+# .NET / C# Build Results
+# ====================
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# ====================
+# .NET Specific Files
+# ====================
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet Packages
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# ====================
+# JetBrains Rider IDE
+# ====================
+.idea/
+
+# ====================
+# Visual Studio (optional backup)
+# ====================
+.vs/
+*.csproj.user
+*.vscode/
+
+# ====================
+# Build Results & Caches
+# ====================
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]uild/
+!**/[Bb]uild/[Bb]uild[Tt]asks/
+
+# ====================
+# Test Results
+# ====================
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+coverage*.xml
+coverage*.json
+*.coverage
+*.coveragexml
+
+# ====================
+# .NET Core / .NET 8-10
+# ====================
+*.dll
+*.exe
+*.pdb
+*.mdb
+
+# Generated files
+Generated\ Files/
+
+# ====================
+# Publish / Deploy
+# ====================
+publish/
+PublishScripts/
+
+# ====================
+# OS Generated Files
+# ====================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ====================
+# Misc
+# ====================
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+*.cache
+*.pidb
+*.svclog
+*.scc

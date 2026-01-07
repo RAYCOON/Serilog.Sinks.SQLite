@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>Serilog</RootNamespace>
+    <AssemblyName>Serilog.Sinks.SQLite.Modern</AssemblyName>
+    
+    <!-- Analyzer-Warnungen unterdrücken, die für Library-Code nicht relevant sind -->
+    <!-- CA2007: ConfigureAwait - Library verwendet bereits ConfigureAwait(false) wo nötig -->
+    <!-- CA1031: Catch generische Exception - Logging-Sink muss robust sein -->
+    <!-- CA1305: IFormatProvider - Interne SQL-Strings sind kultur-unabhängig -->
+    <!-- CA2227: Collection properties - Options-Pattern erfordert settable Collections -->
+    <!-- CA1805: Explizite Default-Initialisierung - Verbessert Lesbarkeit -->
+    <!-- CA1002: Collection<T> statt List<T> - Collection wird bereits verwendet -->
+    <!-- CA2100: SQL Injection - SQL wird aus internen Optionen gebaut, nicht User-Input -->
+    <NoWarn>$(NoWarn);CA2007;CA1031;CA1305;CA2227;CA1805;CA1002;CA2100</NoWarn>
+    
+    <!-- NuGet Package -->
+    <PackageId>Serilog.Sinks.SQLite.Modern</PackageId>
+    <Version>1.0.0</Version>
+    <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Built for .NET 8+ with AnyCPU support using Microsoft.Data.Sqlite.</Description>
+    <PackageDescription>$(Description)</PackageDescription>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Signing (optional) -->
+    <SignAssembly>false</SignAssembly>
+    
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" Condition="Exists('..\..\LICENSE')" />
+  </ItemGroup>
+
+  <!-- Dependencies -->
+  <ItemGroup>
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="5.0.0" />
+  </ItemGroup>
+
+  <!-- .NET 8 specific dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.22" />
+  </ItemGroup>
+
+  <!-- .NET 9 specific dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.11" />
+  </ItemGroup>
+
+  <!-- .NET 10 specific dependencies -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.1" />
+  </ItemGroup>
+
+  <!-- Internals visible to tests -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Serilog.Sinks.SQLite.Modern.Tests" />
+  </ItemGroup>
+
+</Project>
