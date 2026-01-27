@@ -1,8 +1,8 @@
-# Serilog.Sinks.SQLite.Modern
+# Raycoon.Serilog.Sinks.SQLite
 
-[![NuGet](https://img.shields.io/nuget/v/Serilog.Sinks.SQLite.Modern.svg)](https://www.nuget.org/packages/Serilog.Sinks.SQLite.Modern)
+[![NuGet](https://img.shields.io/nuget/v/Raycoon.Serilog.Sinks.SQLite.svg)](https://www.nuget.org/packages/Raycoon.Serilog.Sinks.SQLite)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
 
 Eine moderne, hochperformante Serilog-Sink für SQLite-Datenbanken. Entwickelt für .NET 8+ mit vollständiger **AnyCPU**-Unterstützung.
 
@@ -20,7 +20,7 @@ Eine moderne, hochperformante Serilog-Sink für SQLite-Datenbanken. Entwickelt f
 ## Installation
 
 ```bash
-dotnet add package Serilog.Sinks.SQLite.Modern
+dotnet add package Raycoon.Serilog.Sinks.SQLite
 ```
 
 ## Schnellstart
@@ -46,7 +46,7 @@ await Log.CloseAndFlushAsync();
 ```csharp
 using Serilog;
 using Serilog.Events;
-using Serilog.Sinks.SQLite.Modern.Options;
+using Raycoon.Serilog.Sinks.SQLite.Options;
 
 var logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
@@ -221,7 +221,7 @@ options.QueueLimit = 100000;
 
 ## Vergleich zu anderen SQLite Sinks
 
-| Feature | Serilog.Sinks.SQLite.Modern | Serilog.Sinks.SQLite |
+| Feature | Raycoon.Serilog.Sinks.SQLite | Serilog.Sinks.SQLite |
 |---------|----------------------------|---------------------|
 | AnyCPU Support | ✅ (Microsoft.Data.Sqlite) | ❌ (System.Data.SQLite) |
 | .NET 8/9/10 | ✅ | ⚠️ (nur .NET 7) |

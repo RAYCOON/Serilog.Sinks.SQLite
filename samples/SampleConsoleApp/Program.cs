@@ -1,10 +1,10 @@
-// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
 // Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
 // See LICENSE file in the project root for full license information.
 
 // ============================================================================
-// Serilog.Sinks.SQLite.Modern - Sample Console Application
+// Raycoon.Serilog.Sinks.SQLite - Sample Console Application
 // ============================================================================
 //
 // This demo showcases the various configuration options of the SQLite sink:
@@ -66,11 +66,12 @@
 // ThrowOnError          - Throw exceptions instead of suppressing (default: false)
 // ============================================================================
 
-using Microsoft.Extensions.Configuration;
-using Serilog;
-using Serilog.Events;
-using Serilog.Sinks.SQLite.Modern.Options;
+using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Extensions.Configuration;
+using Raycoon.Serilog.Sinks.SQLite.Options;
+using Serilog;
+using Serilog.Context;
 
 Console.WriteLine("=== Serilog SQLite Sink Demo ===\n");
 
@@ -194,9 +195,9 @@ await using (var advancedLogger = new LoggerConfiguration()
         var requestId = Guid.NewGuid().ToString("N")[..8];
 
         // Use LogContext to add properties that map to custom columns
-        using (Serilog.Context.LogContext.PushProperty("UserId", userId))
-        using (Serilog.Context.LogContext.PushProperty("RequestId", requestId))
-        using (Serilog.Context.LogContext.PushProperty("Duration", duration))
+        using (LogContext.PushProperty("UserId", userId))
+        using (LogContext.PushProperty("RequestId", requestId))
+        using (LogContext.PushProperty("Duration", duration))
         {
             if (random.NextDouble() < 0.1) // 10% errors
             {
@@ -285,7 +286,7 @@ Console.WriteLine("Logs written to 'logs/exceptions.db'\n");
 Console.WriteLine("Example 4: High-Volume Logging (Performance Test)");
 Console.WriteLine(new string('-', 40));
 
-var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+var stopwatch = Stopwatch.StartNew();
 const int messageCount = 5000;
 
 await using (var highVolumeLogger = new LoggerConfiguration()

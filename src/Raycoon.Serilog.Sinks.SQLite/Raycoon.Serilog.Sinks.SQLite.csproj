@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <RootNamespace>Serilog</RootNamespace>
-    <AssemblyName>Serilog.Sinks.SQLite.Modern</AssemblyName>
+    <AssemblyName>Raycoon.Serilog.Sinks.SQLite</AssemblyName>
     
     <!-- Analyzer-Warnungen unterdrücken, die für Library-Code nicht relevant sind -->
     <!-- CA2007: ConfigureAwait - Library verwendet bereits ConfigureAwait(false) wo nötig -->
@@ -15,11 +15,29 @@
     <!-- CA2100: SQL Injection - SQL wird aus internen Optionen gebaut, nicht User-Input -->
     <NoWarn>$(NoWarn);CA2007;CA1031;CA1305;CA2227;CA1805;CA1002;CA2100</NoWarn>
     
-    <!-- NuGet Package -->
-    <PackageId>Serilog.Sinks.SQLite.Modern</PackageId>
+    <!-- NuGet Package Identification -->
+    <PackageId>Raycoon.Serilog.Sinks.SQLite</PackageId>
     <Version>1.0.0</Version>
-    <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Built for .NET 8+ with AnyCPU support using Microsoft.Data.Sqlite.</Description>
+    <Authors>Daniel Pavic</Authors>
+    <Company>RAYCOON.com GmbH</Company>
+    <Copyright>Copyright (c) 2025 RAYCOON.com GmbH</Copyright>
+
+    <!-- Package Description -->
+    <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
     <PackageDescription>$(Description)</PackageDescription>
+    <PackageTags>serilog;sqlite;logging;sink;database;structured-logging;batching;retention</PackageTags>
+    <PackageReleaseNotes>Initial release with full feature set: async batching, retention policies, custom columns, and SQLite performance tuning.</PackageReleaseNotes>
+
+    <!-- Package URLs -->
+    <PackageProjectUrl>https://github.com/raycoon/Raycoon.Serilog.Sinks.SQLite</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/raycoon/Raycoon.Serilog.Sinks.SQLite.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+
+    <!-- License -->
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+
+    <!-- Package Content -->
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -60,7 +78,7 @@
 
   <!-- Internals visible to tests -->
   <ItemGroup>
-    <InternalsVisibleTo Include="Serilog.Sinks.SQLite.Modern.Tests" />
+    <InternalsVisibleTo Include="Raycoon.Serilog.Sinks.SQLite.Tests" />
   </ItemGroup>
 
 </Project>

@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Serilog.Sinks.SQLite.Modern\Serilog.Sinks.SQLite.Modern.csproj" />
+    <ProjectReference Include="..\..\src\Raycoon.Serilog.Sinks.SQLite\Raycoon.Serilog.Sinks.SQLite.csproj" />
   </ItemGroup>
 
   <ItemGroup>
