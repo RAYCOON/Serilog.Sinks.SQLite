@@ -1,5 +1,7 @@
-// Copyright (c) 2025 Your Company. All rights reserved.
+// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
+// See LICENSE file in the project root for full license information.
 
 using System.Globalization;
 using System.Text;
@@ -10,8 +12,25 @@ using Serilog.Sinks.SQLite.Modern.Options;
 namespace Serilog.Sinks.SQLite.Modern.Internal;
 
 /// <summary>
-/// Verwaltet die SQLite-Datenbankverbindungen und das Schema.
+/// Manages SQLite database connections, schema initialization, and database operations.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This class is responsible for all low-level database operations including:
+/// </para>
+/// <list type="bullet">
+///   <item><description>Building and managing connection strings</description></item>
+///   <item><description>Opening and configuring database connections with optimal PRAGMA settings</description></item>
+///   <item><description>Creating and initializing the log table schema</description></item>
+///   <item><description>Creating indexes for improved query performance</description></item>
+///   <item><description>Providing utility methods for database size and log count queries</description></item>
+///   <item><description>Executing VACUUM operations for database optimization</description></item>
+/// </list>
+/// <para>
+/// The class uses connection pooling via Microsoft.Data.Sqlite for efficient connection reuse.
+/// Schema initialization is performed lazily on first write and is thread-safe using a semaphore.
+/// </para>
+/// </remarks>
 internal sealed class DatabaseManager : IDisposable
 {
     private readonly SQLiteSinkOptions _options;
@@ -21,23 +40,59 @@ internal sealed class DatabaseManager : IDisposable
     private bool _disposed;
 
     /// <summary>
-    /// Die Standard-Spaltennamen der Log-Tabelle.
+    /// Contains constant definitions for the standard column names used in the log table.
     /// </summary>
+    /// <remarks>
+    /// These column names are used throughout the sink for consistency when building
+    /// SQL statements and referencing log data. Custom columns defined in
+    /// <see cref="SQLiteSinkOptions.CustomColumns"/> are added in addition to these.
+    /// </remarks>
     public static class Columns
     {
+        /// <summary>The auto-incrementing primary key column.</summary>
         public const string Id = "Id";
+
+        /// <summary>The timestamp column storing when the log event occurred (ISO 8601 format).</summary>
         public const string Timestamp = "Timestamp";
+
+        /// <summary>The numeric log level (0=Verbose, 1=Debug, 2=Information, 3=Warning, 4=Error, 5=Fatal).</summary>
         public const string Level = "Level";
+
+        /// <summary>The human-readable log level name.</summary>
         public const string LevelName = "LevelName";
+
+        /// <summary>The rendered log message with property values substituted.</summary>
         public const string Message = "Message";
+
+        /// <summary>The original message template before property substitution.</summary>
         public const string MessageTemplate = "MessageTemplate";
+
+        /// <summary>The exception details if an exception was logged (may be null).</summary>
         public const string Exception = "Exception";
+
+        /// <summary>The log event properties serialized as JSON (may be null).</summary>
         public const string Properties = "Properties";
+
+        /// <summary>The source context (typically the class name) that generated the log.</summary>
         public const string SourceContext = "SourceContext";
+
+        /// <summary>The name of the machine where the log was generated.</summary>
         public const string MachineName = "MachineName";
+
+        /// <summary>The managed thread ID that generated the log event.</summary>
         public const string ThreadId = "ThreadId";
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DatabaseManager"/> class.
+    /// </summary>
+    /// <param name="options">
+    /// The sink configuration options containing database path, connection parameters,
+    /// and schema settings. Must not be <c>null</c>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="options"/> is <c>null</c>.
+    /// </exception>
     public DatabaseManager(SQLiteSinkOptions options)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -45,8 +100,20 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Baut den Connection-String basierend auf den Optionen.
+    /// Builds the SQLite connection string based on the provided configuration options.
     /// </summary>
+    /// <param name="options">The sink options containing database path and connection parameters.</param>
+    /// <returns>A fully constructed connection string for SQLite.</returns>
+    /// <remarks>
+    /// The connection string is configured with:
+    /// <list type="bullet">
+    ///   <item><description>Shared cache mode for better concurrency</description></item>
+    ///   <item><description>Connection pooling enabled for performance</description></item>
+    ///   <item><description>Memory mode for <c>:memory:</c> databases</description></item>
+    ///   <item><description>ReadWriteCreate mode for file-based databases</description></item>
+    ///   <item><description>Any additional parameters from <see cref="SQLiteSinkOptions.AdditionalConnectionParameters"/></description></item>
+    /// </list>
+    /// </remarks>
     private static string BuildConnectionString(SQLiteSinkOptions options)
     {
         var builder = new SqliteConnectionStringBuilder
@@ -59,7 +126,7 @@ internal sealed class DatabaseManager : IDisposable
             Pooling = true
         };
 
-        // Zusätzliche Parameter hinzufügen
+        // Add any additional connection parameters
         foreach (var param in options.AdditionalConnectionParameters)
         {
             builder[param.Key] = param.Value;
@@ -69,16 +136,40 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Erstellt eine neue Datenbankverbindung.
+    /// Creates a new, unopened database connection using the configured connection string.
     /// </summary>
+    /// <returns>A new <see cref="SqliteConnection"/> instance that has not been opened.</returns>
+    /// <remarks>
+    /// The caller is responsible for opening and disposing the returned connection.
+    /// For most use cases, prefer <see cref="OpenConnectionAsync"/> which handles
+    /// opening and configuring the connection.
+    /// </remarks>
     public SqliteConnection CreateConnection()
     {
         return new SqliteConnection(_connectionString);
     }
 
     /// <summary>
-    /// Öffnet eine Verbindung und konfiguriert sie.
+    /// Opens a new database connection and configures it with optimal PRAGMA settings.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains
+    /// an open and configured <see cref="SqliteConnection"/>.
+    /// </returns>
+    /// <remarks>
+    /// The connection is configured with the following PRAGMA settings for optimal performance:
+    /// <list type="bullet">
+    ///   <item><description>journal_mode: As configured in options (default: WAL)</description></item>
+    ///   <item><description>synchronous: As configured in options (default: NORMAL)</description></item>
+    ///   <item><description>temp_store: MEMORY (temp tables in RAM)</description></item>
+    ///   <item><description>mmap_size: 256MB (memory-mapped I/O)</description></item>
+    ///   <item><description>cache_size: 64MB (page cache size)</description></item>
+    /// </list>
+    /// The caller is responsible for disposing the returned connection.
+    /// </remarks>
+    /// <exception cref="SqliteException">Thrown when the connection cannot be opened.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled.</exception>
     public async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)
     {
         var connection = CreateConnection();
@@ -96,11 +187,14 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Konfiguriert eine geöffnete Verbindung mit den Pragma-Einstellungen.
+    /// Configures an open connection with SQLite PRAGMA settings for optimal performance.
     /// </summary>
+    /// <param name="connection">The open database connection to configure.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous configuration operation.</returns>
     private async Task ConfigureConnectionAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
-        // Journal-Mode setzen
+        // Set journal mode (WAL recommended for concurrent access)
         var journalMode = _options.JournalMode.ToString().ToUpperInvariant();
         await ExecutePragmaAsync(connection, string.Create(CultureInfo.InvariantCulture, $"journal_mode = {journalMode}"), cancellationToken).ConfigureAwait(false);
         await ExecutePragmaAsync(connection, string.Create(CultureInfo.InvariantCulture, $"synchronous = {(int)_options.SynchronousMode}"), cancellationToken).ConfigureAwait(false);
@@ -109,6 +203,13 @@ internal sealed class DatabaseManager : IDisposable
         await ExecutePragmaAsync(connection, "cache_size = -64000", cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Executes a SQLite PRAGMA statement on the specified connection.
+    /// </summary>
+    /// <param name="connection">The database connection on which to execute the PRAGMA.</param>
+    /// <param name="pragma">The PRAGMA statement (without the "PRAGMA " prefix).</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
@@ -121,8 +222,26 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Initialisiert das Datenbankschema, wenn noch nicht geschehen.
+    /// Ensures the database schema (table and indexes) is initialized.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous schema initialization.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method is thread-safe and uses double-checked locking with a semaphore
+    /// to ensure the schema is only initialized once, even when called concurrently.
+    /// </para>
+    /// <para>
+    /// If <see cref="SQLiteSinkOptions.AutoCreateDatabase"/> is <c>false</c>, this method
+    /// returns immediately without creating any schema.
+    /// </para>
+    /// <para>
+    /// The method creates the database directory if it doesn't exist, creates the log table
+    /// with all standard and custom columns, and creates indexes for improved query performance.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="SqliteException">Thrown when schema creation fails.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled.</exception>
     public async Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
     {
         if (_schemaInitialized || !_options.AutoCreateDatabase)
@@ -138,7 +257,7 @@ internal sealed class DatabaseManager : IDisposable
                 return;
             }
 
-            // Verzeichnis erstellen falls nötig
+            // Create directory if needed
             EnsureDirectoryExists();
 
             await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -154,6 +273,12 @@ internal sealed class DatabaseManager : IDisposable
         }
     }
 
+    /// <summary>
+    /// Ensures the directory for the database file exists, creating it if necessary.
+    /// </summary>
+    /// <remarks>
+    /// This method is a no-op for in-memory databases (<c>:memory:</c>).
+    /// </remarks>
     private void EnsureDirectoryExists()
     {
         if (_options.DatabasePath == ":memory:")
@@ -170,8 +295,11 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Erstellt die Log-Tabelle.
+    /// Creates the log table in the database if it doesn't already exist.
     /// </summary>
+    /// <param name="connection">An open database connection.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous table creation.</returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
@@ -186,8 +314,13 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Baut das CREATE TABLE Statement.
+    /// Builds the SQL CREATE TABLE statement for the log table.
     /// </summary>
+    /// <returns>A complete CREATE TABLE IF NOT EXISTS SQL statement.</returns>
+    /// <remarks>
+    /// The generated table includes all standard columns defined in <see cref="Columns"/>
+    /// plus any custom columns defined in <see cref="SQLiteSinkOptions.CustomColumns"/>.
+    /// </remarks>
     private string BuildCreateTableSql()
     {
         var sb = new StringBuilder();
@@ -228,8 +361,20 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Erstellt Indizes für bessere Query-Performance.
+    /// Creates database indexes for improved query performance.
     /// </summary>
+    /// <param name="connection">An open database connection.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous index creation.</returns>
+    /// <remarks>
+    /// The following indexes are created by default:
+    /// <list type="bullet">
+    ///   <item><description>Index on Timestamp for time-based queries</description></item>
+    ///   <item><description>Index on Level for log level filtering</description></item>
+    ///   <item><description>Composite index on Timestamp and Level for combined filtering</description></item>
+    ///   <item><description>Individual indexes for custom columns where <see cref="CustomColumn.CreateIndex"/> is <c>true</c></description></item>
+    /// </list>
+    /// </remarks>
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
@@ -259,8 +404,18 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Gibt die aktuelle Datenbankgröße in Bytes zurück.
+    /// Gets the current size of the database file in bytes.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains
+    /// the database size in bytes, or <c>0</c> for in-memory databases.
+    /// </returns>
+    /// <remarks>
+    /// The size is calculated using SQLite's page_count and page_size PRAGMA values,
+    /// providing an accurate measure of the actual database file size including any
+    /// unused pages.
+    /// </remarks>
     public async Task<long> GetDatabaseSizeAsync(CancellationToken cancellationToken = default)
     {
         if (_options.DatabasePath == ":memory:")
@@ -270,7 +425,7 @@ internal sealed class DatabaseManager : IDisposable
 
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
-        // Page count abfragen
+        // Query page count
         await using var pageCountCmd = connection.CreateCommand();
         pageCountCmd.CommandText = "PRAGMA page_count";
         var pageCountResult = await pageCountCmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
@@ -285,8 +440,13 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Gibt die Anzahl der Log-Einträge zurück.
+    /// Gets the current number of log entries in the database.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains
+    /// the number of log entries in the configured table.
+    /// </returns>
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
@@ -302,8 +462,23 @@ internal sealed class DatabaseManager : IDisposable
     }
 
     /// <summary>
-    /// Führt VACUUM aus, um die Datenbankdatei zu komprimieren.
+    /// Executes the VACUUM command to rebuild the database file and reclaim unused space.
     /// </summary>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous VACUUM operation.</returns>
+    /// <remarks>
+    /// <para>
+    /// VACUUM rebuilds the database file, repacking it into a minimal amount of disk space.
+    /// This is useful after deleting large amounts of data to reduce file size.
+    /// </para>
+    /// <para>
+    /// This operation is a no-op for in-memory databases.
+    /// </para>
+    /// <para>
+    /// Note: VACUUM requires exclusive access to the database and may take significant
+    /// time for large databases. It also temporarily doubles the disk space requirement.
+    /// </para>
+    /// </remarks>
     public async Task VacuumAsync(CancellationToken cancellationToken = default)
     {
         if (_options.DatabasePath == ":memory:")
@@ -319,6 +494,14 @@ internal sealed class DatabaseManager : IDisposable
         SelfLog.WriteLine("SQLite VACUUM completed for database '{0}'", _options.DatabasePath);
     }
 
+    /// <summary>
+    /// Releases all resources used by the <see cref="DatabaseManager"/>.
+    /// </summary>
+    /// <remarks>
+    /// This method disposes the internal semaphore used for thread synchronization.
+    /// Note that database connections are not pooled by this class; connection pooling
+    /// is handled by the Microsoft.Data.Sqlite library.
+    /// </remarks>
     public void Dispose()
     {
         if (_disposed)

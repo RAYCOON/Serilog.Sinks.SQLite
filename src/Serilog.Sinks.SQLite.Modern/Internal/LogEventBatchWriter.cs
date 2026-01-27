@@ -1,5 +1,7 @@
-// Copyright (c) 2025 Your Company. All rights reserved.
+// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
+// See LICENSE file in the project root for full license information.
 
 using System.Globalization;
 using System.Text;
@@ -11,8 +13,27 @@ using Serilog.Sinks.SQLite.Modern.Options;
 namespace Serilog.Sinks.SQLite.Modern.Internal;
 
 /// <summary>
-/// Schreibt Log-Events effizient in Batches in die SQLite-Datenbank.
+/// Writes batches of log events efficiently to the SQLite database using transactions.
 /// </summary>
+/// <remarks>
+/// <para>
+/// This class is responsible for the actual database write operations and handles:
+/// </para>
+/// <list type="bullet">
+///   <item><description>Building parameterized INSERT statements for safe and efficient writes</description></item>
+///   <item><description>Managing database transactions for batch atomicity</description></item>
+///   <item><description>Converting log events to database values</description></item>
+///   <item><description>Serializing properties to JSON format</description></item>
+///   <item><description>Formatting exceptions with full stack traces</description></item>
+///   <item><description>Truncating values to configured maximum lengths</description></item>
+///   <item><description>Error handling with configurable callbacks and throw behavior</description></item>
+/// </list>
+/// <para>
+/// The writer reuses prepared statements and parameters within a batch for optimal performance.
+/// All database operations are performed within a transaction that is committed on success
+/// or rolled back on failure.
+/// </para>
+/// </remarks>
 internal sealed class LogEventBatchWriter : IDisposable
 {
     private readonly SQLiteSinkOptions _options;
@@ -20,6 +41,20 @@ internal sealed class LogEventBatchWriter : IDisposable
     private readonly string _machineName;
     private bool _disposed;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LogEventBatchWriter"/> class.
+    /// </summary>
+    /// <param name="options">
+    /// The sink configuration options containing truncation limits, column definitions,
+    /// and error handling settings. Must not be <c>null</c>.
+    /// </param>
+    /// <param name="databaseManager">
+    /// The database manager for obtaining connections and ensuring schema initialization.
+    /// Must not be <c>null</c>.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="options"/> or <paramref name="databaseManager"/> is <c>null</c>.
+    /// </exception>
     public LogEventBatchWriter(SQLiteSinkOptions options, DatabaseManager databaseManager)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -28,13 +63,33 @@ internal sealed class LogEventBatchWriter : IDisposable
     }
 
     /// <summary>
-    /// Schreibt einen Batch von Log-Events in die Datenbank.
+    /// Writes a batch of log events to the database within a single transaction.
     /// </summary>
+    /// <param name="events">The collection of log events to write.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous write operation.</returns>
+    /// <remarks>
+    /// <para>
+    /// This method performs the following operations:
+    /// </para>
+    /// <list type="number">
+    ///   <item><description>Ensures the database schema is initialized</description></item>
+    ///   <item><description>Opens a connection and begins a transaction</description></item>
+    ///   <item><description>Creates a parameterized INSERT statement</description></item>
+    ///   <item><description>Iterates through events, populating parameters and executing the statement</description></item>
+    ///   <item><description>Commits the transaction on success or rolls back on failure</description></item>
+    /// </list>
+    /// <para>
+    /// If an error occurs and <see cref="SQLiteSinkOptions.OnError"/> is configured, the callback
+    /// is invoked. If <see cref="SQLiteSinkOptions.ThrowOnError"/> is <c>true</c>, the exception
+    /// is re-thrown after the callback.
+    /// </para>
+    /// </remarks>
     public async Task WriteBatchAsync(IEnumerable<LogEvent> events, CancellationToken cancellationToken = default)
     {
-        // Materialisiere zu Liste für Count und mehrfache Iteration
+        // Materialize to list for count and multiple iteration
         var eventList = events as IReadOnlyCollection<LogEvent> ?? events.ToList();
-        
+
         if (eventList.Count == 0)
         {
             return;
@@ -53,7 +108,7 @@ internal sealed class LogEventBatchWriter : IDisposable
                 command.CommandText = insertSql;
                 command.Transaction = (SqliteTransaction)transaction;
 
-                // Parameter einmal erstellen und wiederverwenden
+                // Create parameters once and reuse them
                 var parameters = CreateParameters(command);
 
                 foreach (var logEvent in eventList)
@@ -84,8 +139,13 @@ internal sealed class LogEventBatchWriter : IDisposable
     }
 
     /// <summary>
-    /// Baut das INSERT-Statement.
+    /// Builds the parameterized INSERT SQL statement for the log table.
     /// </summary>
+    /// <returns>A complete INSERT SQL statement with parameter placeholders.</returns>
+    /// <remarks>
+    /// The generated statement includes all standard columns and any custom columns
+    /// defined in <see cref="SQLiteSinkOptions.CustomColumns"/>.
+    /// </remarks>
     private string BuildInsertSql()
     {
         var columns = new List<string>
@@ -112,8 +172,15 @@ internal sealed class LogEventBatchWriter : IDisposable
     }
 
     /// <summary>
-    /// Erstellt die Parameter für das Command.
+    /// Creates and registers all SQL parameters for the INSERT command.
     /// </summary>
+    /// <param name="command">The SQLite command to add parameters to.</param>
+    /// <returns>A dictionary mapping column names to their corresponding parameters for efficient value population.</returns>
+    /// <remarks>
+    /// Parameters are created with appropriate SQLite types for optimal storage and query performance.
+    /// The returned dictionary is used by <see cref="PopulateParameters"/> to efficiently set values
+    /// for each log event without recreating parameters.
+    /// </remarks>
     private Dictionary<string, SqliteParameter> CreateParameters(SqliteCommand command)
     {
         var parameters = new Dictionary<string, SqliteParameter>(StringComparer.OrdinalIgnoreCase);
@@ -154,13 +221,31 @@ internal sealed class LogEventBatchWriter : IDisposable
     }
 
     /// <summary>
-    /// Füllt die Parameter mit Werten aus dem LogEvent.
+    /// Populates the SQL parameters with values from a log event.
     /// </summary>
+    /// <param name="parameters">The dictionary of parameters to populate.</param>
+    /// <param name="logEvent">The log event containing the values to extract.</param>
+    /// <remarks>
+    /// <para>
+    /// This method extracts all relevant data from the log event and sets the corresponding
+    /// parameter values. It handles:
+    /// </para>
+    /// <list type="bullet">
+    ///   <item><description>Timestamp conversion (UTC or local based on configuration)</description></item>
+    ///   <item><description>Log level (both numeric and string representations)</description></item>
+    ///   <item><description>Message rendering with property substitution</description></item>
+    ///   <item><description>Exception formatting with full stack traces</description></item>
+    ///   <item><description>Properties serialization to JSON</description></item>
+    ///   <item><description>Standard properties (SourceContext, MachineName, ThreadId)</description></item>
+    ///   <item><description>Custom column values from log event properties</description></item>
+    ///   <item><description>Value truncation based on configured maximum lengths</description></item>
+    /// </list>
+    /// </remarks>
     private void PopulateParameters(Dictionary<string, SqliteParameter> parameters, LogEvent logEvent)
     {
         // Timestamp
-        var timestamp = _options.StoreTimestampInUtc 
-            ? logEvent.Timestamp.UtcDateTime 
+        var timestamp = _options.StoreTimestampInUtc
+            ? logEvent.Timestamp.UtcDateTime
             : logEvent.Timestamp.LocalDateTime;
         parameters[DatabaseManager.Columns.Timestamp].Value = timestamp.ToString("O", CultureInfo.InvariantCulture);
 
@@ -247,8 +332,10 @@ internal sealed class LogEventBatchWriter : IDisposable
     }
 
     /// <summary>
-    /// Formatiert eine Exception als String.
+    /// Formats an exception and its inner exceptions as a detailed string.
     /// </summary>
+    /// <param name="exception">The exception to format.</param>
+    /// <returns>A string containing the exception type, message, stack trace, and inner exceptions.</returns>
     private static string FormatException(Exception exception)
     {
         var sb = new StringBuilder();
@@ -256,6 +343,16 @@ internal sealed class LogEventBatchWriter : IDisposable
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Recursively formats an exception and its inner exceptions.
+    /// </summary>
+    /// <param name="exception">The exception to format.</param>
+    /// <param name="sb">The StringBuilder to append the formatted output to.</param>
+    /// <param name="depth">The current recursion depth to prevent infinite loops.</param>
+    /// <remarks>
+    /// The maximum recursion depth is 10 to prevent stack overflow from circular exception references.
+    /// For <see cref="AggregateException"/>, all inner exceptions are formatted individually.
+    /// </remarks>
     private static void FormatExceptionRecursive(Exception exception, StringBuilder sb, int depth)
     {
         if (depth > 10) // Prevent infinite recursion
@@ -265,7 +362,7 @@ internal sealed class LogEventBatchWriter : IDisposable
         }
 
         sb.AppendLine($"{exception.GetType().FullName}: {exception.Message}");
-        
+
         if (!string.IsNullOrEmpty(exception.StackTrace))
         {
             sb.AppendLine(exception.StackTrace);
@@ -286,6 +383,16 @@ internal sealed class LogEventBatchWriter : IDisposable
         }
     }
 
+    /// <summary>
+    /// Formats log event properties as a JSON object string.
+    /// </summary>
+    /// <param name="logEvent">The log event containing properties to serialize.</param>
+    /// <returns>A JSON string representation of the log event properties.</returns>
+    /// <remarks>
+    /// Standard properties (SourceContext, ThreadId) are excluded from the JSON output
+    /// as they are stored in dedicated columns. The JSON is generated manually for
+    /// performance rather than using a full JSON serializer.
+    /// </remarks>
     private static string FormatPropertiesAsJson(LogEvent logEvent)
     {
         var sb = new StringBuilder();
@@ -315,6 +422,15 @@ internal sealed class LogEventBatchWriter : IDisposable
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Formats a Serilog property value as JSON, handling all value types.
+    /// </summary>
+    /// <param name="value">The property value to format.</param>
+    /// <param name="sb">The StringBuilder to append the JSON to.</param>
+    /// <remarks>
+    /// Handles <see cref="ScalarValue"/>, <see cref="SequenceValue"/>,
+    /// <see cref="StructureValue"/>, and <see cref="DictionaryValue"/> types.
+    /// </remarks>
     private static void FormatPropertyValue(LogEventPropertyValue value, StringBuilder sb)
     {
         switch (value)
@@ -367,6 +483,15 @@ internal sealed class LogEventBatchWriter : IDisposable
         }
     }
 
+    /// <summary>
+    /// Formats a scalar value as JSON with appropriate type handling.
+    /// </summary>
+    /// <param name="value">The scalar value to format.</param>
+    /// <param name="sb">The StringBuilder to append the JSON to.</param>
+    /// <remarks>
+    /// Handles null, strings, booleans, numeric types, DateTime, DateTimeOffset, Guid,
+    /// and falls back to ToString() for unknown types.
+    /// </remarks>
     private static void FormatScalarValue(object? value, StringBuilder sb)
     {
         switch (value)
@@ -417,6 +542,15 @@ internal sealed class LogEventBatchWriter : IDisposable
         }
     }
 
+    /// <summary>
+    /// Escapes a string for safe inclusion in JSON.
+    /// </summary>
+    /// <param name="s">The string to escape.</param>
+    /// <returns>The escaped string with special characters properly encoded.</returns>
+    /// <remarks>
+    /// Escapes quotes, backslashes, and control characters as per JSON specification (RFC 8259).
+    /// Control characters below space (0x20) are encoded as \uXXXX.
+    /// </remarks>
     private static string EscapeJsonString(string s)
     {
         var sb = new StringBuilder(s.Length);
@@ -448,8 +582,13 @@ internal sealed class LogEventBatchWriter : IDisposable
     }
 
     /// <summary>
-    /// Extrahiert einen skalaren Wert aus einer LogEventPropertyValue.
+    /// Extracts the underlying scalar value from a Serilog property value.
     /// </summary>
+    /// <param name="value">The property value to extract from.</param>
+    /// <returns>
+    /// The underlying value for <see cref="ScalarValue"/> instances, or the string
+    /// representation (with quotes trimmed) for other value types.
+    /// </returns>
     private static object? GetScalarValue(LogEventPropertyValue value)
     {
         return value switch
@@ -459,6 +598,9 @@ internal sealed class LogEventBatchWriter : IDisposable
         };
     }
 
+    /// <summary>
+    /// Releases all resources used by the <see cref="LogEventBatchWriter"/>.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
