@@ -236,18 +236,24 @@ internal sealed class DatabaseManager : IDisposable
         Justification = "SQL is built from validated internal options, not user input")]
     private async Task CreateIndexesAsync(SqliteConnection connection, CancellationToken cancellationToken)
     {
-        var indexes = new List<(string Name, string Columns)> { (string.Create(CultureInfo.InvariantCulture, $"IX_{_options.TableName}_Timestamp"), Columns.Timestamp), (string.Create(CultureInfo.InvariantCulture, $"IX_{_options.TableName}_Level"), Columns.Level), (string.Create(CultureInfo.InvariantCulture, $"IX_{_options.TableName}_Timestamp_Level"), string.Concat(Columns.Timestamp, ", ", Columns.Level)) };
+        var indexes = new List<(string Name, string[] Columns)>
+        {
+            ($"IX_{_options.TableName}_Timestamp", [Columns.Timestamp]),
+            ($"IX_{_options.TableName}_Level", [Columns.Level]),
+            ($"IX_{_options.TableName}_Timestamp_Level", [Columns.Timestamp, Columns.Level])
+        };
 
         // Custom Column Indexes
         foreach (var column in _options.CustomColumns.Where(c => c.CreateIndex))
         {
-            indexes.Add((string.Create(CultureInfo.InvariantCulture, $"IX_{_options.TableName}_{column.ColumnName}"), column.ColumnName));
+            indexes.Add(($"IX_{_options.TableName}_{column.ColumnName}", [column.ColumnName]));
         }
 
         foreach (var (name, columns) in indexes)
         {
             await using var cmd = connection.CreateCommand();
-            cmd.CommandText = string.Create(CultureInfo.InvariantCulture, $"CREATE INDEX IF NOT EXISTS [{name}] ON [{_options.TableName}] ([{columns}])");
+            var columnList = string.Join(", ", columns.Select(c => $"[{c}]"));
+            cmd.CommandText = $"CREATE INDEX IF NOT EXISTS [{name}] ON [{_options.TableName}] ({columnList})";
             await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
