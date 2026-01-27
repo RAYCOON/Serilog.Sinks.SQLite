@@ -1,5 +1,70 @@
-// Copyright (c) 2025 Your Company. All rights reserved.
+// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
+// See LICENSE file in the project root for full license information.
+
+// ============================================================================
+// Serilog.Sinks.SQLite.Modern - Sample Console Application
+// ============================================================================
+//
+// This demo showcases the various configuration options of the SQLite sink:
+//
+// 1. BASIC CONFIGURATION
+//    - Minimal setup using default values
+//    - Only database path is required
+//
+// 2. ADVANCED CONFIGURATION
+//    - Custom columns for efficient SQL queries
+//    - Retention policies (time, count, size-based)
+//    - Performance tuning (JournalMode, SynchronousMode, batching)
+//    - Error callbacks
+//
+// 3. EXCEPTION LOGGING
+//    - Nested exceptions with full stack traces
+//    - Configurable exception length limits
+//
+// 4. HIGH-VOLUME LOGGING
+//    - Parallel writes with optimized batch settings
+//    - Queue limits for back-pressure handling
+//
+// 5. JSON CONFIGURATION
+//    - Integration with Microsoft.Extensions.Configuration
+//    - Minimum level overrides per namespace
+//
+// Available Configuration Options (SQLiteSinkOptions):
+// ────────────────────────────────────────────────────
+// DatabasePath          - Path to SQLite file (relative, absolute, or :memory:)
+// TableName             - Name of the log table (default: "Logs")
+// RestrictedToMinimumLevel - Sink-specific minimum level filter
+// StoreTimestampInUtc   - UTC vs. local time (default: true)
+//
+// Batching:
+// BatchSizeLimit        - Max events per batch (default: 100)
+// BatchPeriod           - Interval between batch writes (default: 2s)
+// QueueLimit            - Max events in queue (default: 10000)
+//
+// Retention:
+// RetentionPeriod       - Max age of logs (e.g., 7 days)
+// RetentionCount        - Max number of logs (e.g., 10000)
+// MaxDatabaseSize       - Max file size in bytes
+// CleanupInterval       - Interval for cleanup runs (default: 1 hour)
+//
+// SQLite Performance:
+// JournalMode           - Delete, Truncate, Persist, Memory, Wal (default), Off
+// SynchronousMode       - Off, Normal (default), Full, Extra
+//
+// Truncation:
+// MaxMessageLength      - Max length of log messages
+// MaxExceptionLength    - Max length of exception details
+// MaxPropertiesLength   - Max length of JSON properties string
+//
+// Custom Columns:
+// CustomColumns.Add()   - Extract properties into dedicated columns for SQL queries
+//
+// Error Handling:
+// OnError               - Callback for write errors
+// ThrowOnError          - Throw exceptions instead of suppressing (default: false)
+// ============================================================================
 
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -9,8 +74,17 @@ using System.Globalization;
 
 Console.WriteLine("=== Serilog SQLite Sink Demo ===\n");
 
-// Beispiel 1: Einfache Konfiguration
-Console.WriteLine("Beispiel 1: Einfache Konfiguration");
+// ────────────────────────────────────────────────────────────────────────────
+// EXAMPLE 1: Basic Configuration
+// ────────────────────────────────────────────────────────────────────────────
+// Minimal setup - only the database path is required.
+// All other settings use sensible defaults:
+// - TableName: "Logs"
+// - BatchSizeLimit: 100, BatchPeriod: 2 seconds
+// - JournalMode: WAL (best performance for concurrent access)
+// - SynchronousMode: Normal (good balance between speed and safety)
+// ────────────────────────────────────────────────────────────────────────────
+Console.WriteLine("Example 1: Basic Configuration");
 Console.WriteLine(new string('-', 40));
 
 await using (var simpleLogger = new LoggerConfiguration()
@@ -19,17 +93,38 @@ await using (var simpleLogger = new LoggerConfiguration()
     .WriteTo.SQLite("logs/simple.db")
     .CreateLogger())
 {
-    simpleLogger.Information("Dies ist eine einfache Log-Nachricht");
-    simpleLogger.Debug("Debug-Information: Wert = {Value}", 42);
-    simpleLogger.Warning("Eine Warnung mit Zeitstempel");
-    
+    simpleLogger.Information("This is a simple log message");
+    simpleLogger.Debug("Debug information: Value = {Value}", 42);
+    simpleLogger.Warning("A warning with timestamp");
+
     await Task.Delay(500);
 }
 
-Console.WriteLine("✓ Einfache Logs wurden nach 'logs/simple.db' geschrieben\n");
+Console.WriteLine("Logs written to 'logs/simple.db'\n");
 
-// Beispiel 2: Erweiterte Konfiguration
-Console.WriteLine("Beispiel 2: Erweiterte Konfiguration");
+// ────────────────────────────────────────────────────────────────────────────
+// EXAMPLE 2: Advanced Configuration
+// ────────────────────────────────────────────────────────────────────────────
+// Demonstrates all important configuration options:
+//
+// RETENTION POLICIES (automatic cleanup):
+// - RetentionPeriod: Delete logs older than 7 days
+// - RetentionCount: Keep maximum 10,000 entries
+// - MaxDatabaseSize: Limit database to 50 MB
+//
+// BATCHING (performance optimization):
+// - BatchSizeLimit: 50 events per batch
+// - BatchPeriod: Write every 500ms
+//
+// SQLITE TUNING:
+// - JournalMode.Wal: Write-Ahead-Logging for better concurrency
+// - SynchronousMode.Normal: Good balance between speed and durability
+//
+// CUSTOM COLUMNS:
+// - Extract properties into dedicated columns for efficient SQL queries
+// - CreateIndex: true automatically creates an index for fast lookups
+// ────────────────────────────────────────────────────────────────────────────
+Console.WriteLine("Example 2: Advanced Configuration");
 Console.WriteLine(new string('-', 40));
 
 await using (var advancedLogger = new LoggerConfiguration()
@@ -42,44 +137,51 @@ await using (var advancedLogger = new LoggerConfiguration()
         formatProvider: CultureInfo.InvariantCulture)
     .WriteTo.SQLite("logs/advanced.db", options =>
     {
+        // Table configuration
         options.TableName = "ApplicationLogs";
+
+        // Retention policies - oldest logs are deleted when limits are exceeded
         options.RetentionPeriod = TimeSpan.FromDays(7);
         options.RetentionCount = 10000;
         options.MaxDatabaseSize = 50 * 1024 * 1024; // 50 MB
+
+        // Batching configuration for throughput optimization
         options.BatchSizeLimit = 50;
         options.BatchPeriod = TimeSpan.FromMilliseconds(500);
+
+        // SQLite performance settings
         options.JournalMode = SQLiteJournalMode.Wal;
         options.SynchronousMode = SQLiteSynchronousMode.Normal;
-        
-        // Custom Columns für strukturierte Daten
+
+        // Custom columns for structured data - enables efficient SQL WHERE clauses
         options.CustomColumns.Add(new CustomColumn
         {
             ColumnName = "UserId",
             DataType = "TEXT",
             PropertyName = "UserId",
-            CreateIndex = true
+            CreateIndex = true  // Index for fast user lookups
         });
-        
+
         options.CustomColumns.Add(new CustomColumn
         {
             ColumnName = "RequestId",
             DataType = "TEXT",
             PropertyName = "RequestId"
         });
-        
+
         options.CustomColumns.Add(new CustomColumn
         {
             ColumnName = "Duration",
             DataType = "REAL",
             PropertyName = "Duration"
         });
-        
-        // Error Callback
-        options.OnError = ex => Console.WriteLine($"SQLite Fehler: {ex.Message}");
+
+        // Error callback - invoked on write failures
+        options.OnError = ex => Console.WriteLine($"SQLite error: {ex.Message}");
     })
     .CreateLogger())
 {
-    // Simuliere verschiedene Log-Szenarien
+    // Simulate various log scenarios
     var random = new Random();
     var userIds = new[] { "user1", "user2", "user3", "admin" };
     var actions = new[] { "Login", "Logout", "ViewPage", "UpdateProfile", "Purchase" };
@@ -91,41 +193,53 @@ await using (var advancedLogger = new LoggerConfiguration()
         var duration = random.NextDouble() * 1000;
         var requestId = Guid.NewGuid().ToString("N")[..8];
 
+        // Use LogContext to add properties that map to custom columns
         using (Serilog.Context.LogContext.PushProperty("UserId", userId))
         using (Serilog.Context.LogContext.PushProperty("RequestId", requestId))
         using (Serilog.Context.LogContext.PushProperty("Duration", duration))
         {
-            if (random.NextDouble() < 0.1) // 10% Fehler
+            if (random.NextDouble() < 0.1) // 10% errors
             {
                 advancedLogger.Error(
-                    new InvalidOperationException($"Aktion '{action}' fehlgeschlagen"),
-                    "Fehler bei Aktion {Action} für Benutzer {UserId}",
+                    new InvalidOperationException($"Action '{action}' failed"),
+                    "Error during action {Action} for user {UserId}",
                     action, userId);
             }
-            else if (random.NextDouble() < 0.2) // 20% Warnungen
+            else if (random.NextDouble() < 0.2) // 20% warnings
             {
                 advancedLogger.Warning(
-                    "Langsame Aktion {Action} - Dauer: {Duration:F2}ms",
+                    "Slow action {Action} - Duration: {Duration:F2}ms",
                     action, duration);
             }
             else
             {
                 advancedLogger.Information(
-                    "Benutzer {UserId} führte Aktion {Action} aus - Dauer: {Duration:F2}ms",
+                    "User {UserId} performed action {Action} - Duration: {Duration:F2}ms",
                     userId, action, duration);
             }
         }
-        
+
         await Task.Delay(50);
     }
-    
+
     await Task.Delay(1000);
 }
 
-Console.WriteLine("✓ Erweiterte Logs wurden nach 'logs/advanced.db' geschrieben\n");
+Console.WriteLine("Logs written to 'logs/advanced.db'\n");
 
-// Beispiel 3: Exception Logging
-Console.WriteLine("Beispiel 3: Exception Logging");
+// ────────────────────────────────────────────────────────────────────────────
+// EXAMPLE 3: Exception Logging
+// ────────────────────────────────────────────────────────────────────────────
+// Demonstrates storing exceptions with full details:
+//
+// - StoreExceptionDetails: true (default) stores Type, Message, StackTrace
+// - MaxExceptionLength: 8000 limits the exception string length
+//   (useful for very deep stack traces or AggregateExceptions)
+//
+// The Exception column contains the complete ToString() output including
+// InnerExceptions and AggregateException contents.
+// ────────────────────────────────────────────────────────────────────────────
+Console.WriteLine("Example 3: Exception Logging");
 Console.WriteLine(new string('-', 40));
 
 await using (var exceptionLogger = new LoggerConfiguration()
@@ -144,16 +258,31 @@ await using (var exceptionLogger = new LoggerConfiguration()
     }
     catch (Exception ex)
     {
-        exceptionLogger.Error(ex, "Ein komplexer Fehler ist aufgetreten");
+        exceptionLogger.Error(ex, "A complex error occurred");
     }
-    
+
     await Task.Delay(500);
 }
 
-Console.WriteLine("✓ Exception-Logs wurden nach 'logs/exceptions.db' geschrieben\n");
+Console.WriteLine("Logs written to 'logs/exceptions.db'\n");
 
-// Beispiel 4: High-Volume Logging
-Console.WriteLine("Beispiel 4: High-Volume Logging (Performance Test)");
+// ────────────────────────────────────────────────────────────────────────────
+// EXAMPLE 4: High-Volume Logging (Performance Test)
+// ────────────────────────────────────────────────────────────────────────────
+// Optimized settings for high throughput:
+//
+// - BatchSizeLimit: 500 (larger batches = fewer transactions)
+// - BatchPeriod: 100ms (more frequent writes = lower latency)
+// - QueueLimit: 50,000 (larger buffer for burst traffic)
+//
+// BACK-PRESSURE:
+// When the queue is full (> QueueLimit), new events are dropped.
+// This prevents memory exhaustion under sustained overload.
+//
+// This test writes 5,000 events in parallel with 10 threads and measures
+// throughput (events/second).
+// ────────────────────────────────────────────────────────────────────────────
+Console.WriteLine("Example 4: High-Volume Logging (Performance Test)");
 Console.WriteLine(new string('-', 40));
 
 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -168,7 +297,7 @@ await using (var highVolumeLogger = new LoggerConfiguration()
     })
     .CreateLogger())
 {
-    // Parallel logging
+    // Parallel logging from multiple threads
     await Parallel.ForEachAsync(
         Enumerable.Range(0, messageCount),
         new ParallelOptions { MaxDegreeOfParallelism = 10 },
@@ -176,28 +305,39 @@ await using (var highVolumeLogger = new LoggerConfiguration()
         {
             highVolumeLogger.Information(
                 "High-Volume Message {MessageId}: Data={Data}, Timestamp={Timestamp}",
-                i, 
+                i,
                 Guid.NewGuid(),
                 DateTime.UtcNow);
-            
+
             if (i % 1000 == 0)
             {
                 await Task.Yield();
             }
         });
-    
-    await Task.Delay(2000); // Warten auf Flush
+
+    await Task.Delay(2000); // Wait for flush
 }
 
 stopwatch.Stop();
-Console.WriteLine($"✓ {messageCount:N0} Nachrichten in {stopwatch.ElapsedMilliseconds}ms geschrieben");
-Console.WriteLine($"  Durchsatz: {messageCount / stopwatch.Elapsed.TotalSeconds:N0} msgs/sec\n");
+Console.WriteLine($"{messageCount:N0} messages written in {stopwatch.ElapsedMilliseconds}ms");
+Console.WriteLine($"  Throughput: {messageCount / stopwatch.Elapsed.TotalSeconds:N0} msgs/sec\n");
 
-// Beispiel 5: Konfiguration über JSON
-Console.WriteLine("Beispiel 5: Konfiguration über JSON");
+// ────────────────────────────────────────────────────────────────────────────
+// EXAMPLE 5: JSON Configuration
+// ────────────────────────────────────────────────────────────────────────────
+// Integration with Microsoft.Extensions.Configuration:
+//
+// - Read minimum levels from appsettings.json
+// - Override levels per namespace (e.g., suppress Microsoft.* noise)
+// - Combine with programmatic SQLite sink configuration
+//
+// Note: The SQLite sink itself can also be configured via JSON using
+// Serilog.Settings.Configuration, but this example shows the hybrid approach.
+// ────────────────────────────────────────────────────────────────────────────
+Console.WriteLine("Example 5: JSON Configuration");
 Console.WriteLine(new string('-', 40));
 
-// Erstelle eine temporäre appsettings.json
+// Create a temporary appsettings.json
 var appSettingsContent = """
 {
   "Serilog": {
@@ -228,16 +368,18 @@ await using (var configLogger = new LoggerConfiguration()
     })
     .CreateLogger())
 {
-    configLogger.Information("Log aus JSON-konfiguriertem Logger");
-    configLogger.Debug("Diese Debug-Nachricht wird gefiltert (MinLevel=Information)");
-    
+    configLogger.Information("Log from JSON-configured logger");
+    configLogger.Debug("This debug message is filtered (MinLevel=Information)");
+
     await Task.Delay(500);
 }
 
-Console.WriteLine("✓ JSON-konfigurierte Logs wurden geschrieben\n");
+Console.WriteLine("Logs written via JSON-configured logger\n");
 
-// Zusammenfassung
-Console.WriteLine("=== Zusammenfassung ===");
+// ────────────────────────────────────────────────────────────────────────────
+// Summary
+// ────────────────────────────────────────────────────────────────────────────
+Console.WriteLine("=== Summary ===");
 Console.WriteLine(new string('=', 40));
 
 var logFiles = Directory.GetFiles("logs", "*.db")
@@ -249,9 +391,11 @@ foreach (var file in logFiles)
     Console.WriteLine($"  {file.Name,-25} {file.Length / 1024.0:F1} KB");
 }
 
-Console.WriteLine("\n✓ Demo abgeschlossen!");
+Console.WriteLine("\nDemo completed!");
 
-// Hilfsmethode für komplexe Exception
+// ────────────────────────────────────────────────────────────────────────────
+// Helper method for complex exception simulation
+// ────────────────────────────────────────────────────────────────────────────
 static async Task SimulateComplexException()
 {
     try
@@ -260,19 +404,19 @@ static async Task SimulateComplexException()
         {
             try
             {
-                throw new InvalidOperationException("Innerer Fehler in Task");
+                throw new InvalidOperationException("Inner error in task");
             }
             catch (Exception inner)
             {
-                throw new AggregateException("Mehrere Fehler aufgetreten", 
+                throw new AggregateException("Multiple errors occurred",
                     inner,
-                    new ArgumentException("Ungültiges Argument"),
-                    new TimeoutException("Operation hat zu lange gedauert"));
+                    new ArgumentException("Invalid argument"),
+                    new TimeoutException("Operation timed out"));
             }
         });
     }
     catch (Exception ex)
     {
-        throw new ApplicationException("Anwendungsfehler mit verschachtelten Exceptions", ex);
+        throw new ApplicationException("Application error with nested exceptions", ex);
     }
 }
