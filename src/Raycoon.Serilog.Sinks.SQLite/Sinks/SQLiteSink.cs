@@ -1,15 +1,17 @@
-// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
 // Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
 // See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
+using Raycoon.Serilog.Sinks.SQLite.Internal;
+using Raycoon.Serilog.Sinks.SQLite.Options;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
-using Serilog.Sinks.SQLite.Modern.Internal;
-using Serilog.Sinks.SQLite.Modern.Options;
+using ILogEventSink = Serilog.Core.ILogEventSink;
 
-namespace Serilog.Sinks.SQLite.Modern.Sinks;
+namespace Raycoon.Serilog.Sinks.SQLite.Sinks;
 
 /// <summary>
 /// A Serilog sink that writes log events to a SQLite database.
@@ -51,7 +53,7 @@ namespace Serilog.Sinks.SQLite.Modern.Sinks;
 ///     .CreateLogger();
 /// </code>
 /// </example>
-public sealed class SQLiteSink : Serilog.Sinks.PeriodicBatching.IBatchedLogEventSink, IDisposable, IAsyncDisposable
+public sealed class SQLiteSink : IBatchedLogEventSink, IDisposable, IAsyncDisposable
 {
     private readonly SQLiteSinkOptions _options;
     private readonly DatabaseManager _databaseManager;
@@ -318,7 +320,7 @@ internal static class SQLiteSinkFactory
     /// </summary>
     /// <param name="options">The configuration options for the sink.</param>
     /// <returns>
-    /// An <see cref="Serilog.Core.ILogEventSink"/> that batches events and writes them to SQLite.
+    /// An <see cref="global::Serilog.Core.ILogEventSink"/> that batches events and writes them to SQLite.
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// Thrown when <paramref name="options"/> is <c>null</c>.
@@ -337,11 +339,11 @@ internal static class SQLiteSinkFactory
     /// the sink is properly disposed before re-throwing the exception.
     /// </para>
     /// </remarks>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    [SuppressMessage(
         "Reliability",
         "CA2000:Dispose objects before losing scope",
         Justification = "PeriodicBatchingSink takes ownership of the sink and disposes it")]
-    public static Serilog.Core.ILogEventSink Create(SQLiteSinkOptions options)
+    public static ILogEventSink Create(SQLiteSinkOptions options)
     {
         var sink = new SQLiteSink(options);
 

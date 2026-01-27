@@ -1,4 +1,4 @@
-// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
 // Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
 // See LICENSE file in the project root for full license information.
@@ -6,7 +6,7 @@
 using System.Collections.ObjectModel;
 using Serilog.Events;
 
-namespace Serilog.Sinks.SQLite.Modern.Options;
+namespace Raycoon.Serilog.Sinks.SQLite.Options;
 
 /// <summary>
 /// Configuration options for the SQLite Serilog sink.

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
 // Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
 // See LICENSE file in the project root for full license information.
@@ -6,11 +6,11 @@
 using System.Globalization;
 using System.Text;
 using Microsoft.Data.Sqlite;
+using Raycoon.Serilog.Sinks.SQLite.Options;
 using Serilog.Debugging;
 using Serilog.Events;
-using Serilog.Sinks.SQLite.Modern.Options;
 
-namespace Serilog.Sinks.SQLite.Modern.Internal;
+namespace Raycoon.Serilog.Sinks.SQLite.Internal;
 
 /// <summary>
 /// Writes batches of log events efficiently to the SQLite database using transactions.

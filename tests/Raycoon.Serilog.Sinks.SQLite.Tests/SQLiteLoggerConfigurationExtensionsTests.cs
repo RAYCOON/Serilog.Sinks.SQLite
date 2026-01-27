@@ -1,11 +1,15 @@
-// Copyright (c) 2025 Your Company. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
+// Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
+// See LICENSE file in the project root for full license information.
 
+using Microsoft.Data.Sqlite;
+using Raycoon.Serilog.Sinks.SQLite.Options;
+using Serilog;
 using Serilog.Configuration;
 using Serilog.Events;
-using Serilog.Sinks.SQLite.Modern.Options;
 
-namespace Serilog.Sinks.SQLite.Modern.Tests;
+namespace Raycoon.Serilog.Sinks.SQLite.Tests;
 
 public sealed class SQLiteLoggerConfigurationExtensionsTests : IDisposable
 {
@@ -129,7 +133,7 @@ public sealed class SQLiteLoggerConfigurationExtensionsTests : IDisposable
         await Task.Delay(100);
 
         // Assert
-        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_testDbPath}");
+        await using var connection = new SqliteConnection($"Data Source={_testDbPath}");
         await connection.OpenAsync();
 
         await using var cmd = connection.CreateCommand();
@@ -222,7 +226,7 @@ public sealed class SQLiteLoggerConfigurationExtensionsTests : IDisposable
         await Task.Delay(100);
 
         // Assert - Only Error and Fatal should be stored
-        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_testDbPath}");
+        await using var connection = new SqliteConnection($"Data Source={_testDbPath}");
         await connection.OpenAsync();
 
         await using var cmd = connection.CreateCommand();
@@ -295,7 +299,7 @@ public sealed class SQLiteLoggerConfigurationExtensionsTests : IDisposable
         await Task.Delay(100);
 
         // Assert
-        await using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={_testDbPath}");
+        await using var connection = new SqliteConnection($"Data Source={_testDbPath}");
         await connection.OpenAsync();
 
         await using var cmd = connection.CreateCommand();

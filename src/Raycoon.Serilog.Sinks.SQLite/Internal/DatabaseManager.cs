@@ -1,15 +1,16 @@
-// Copyright (c) 2025 RAYCOON.com GmbH. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
 // Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
 // See LICENSE file in the project root for full license information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
 using Microsoft.Data.Sqlite;
+using Raycoon.Serilog.Sinks.SQLite.Options;
 using Serilog.Debugging;
-using Serilog.Sinks.SQLite.Modern.Options;
 
-namespace Serilog.Sinks.SQLite.Modern.Internal;
+namespace Raycoon.Serilog.Sinks.SQLite.Internal;
 
 /// <summary>
 /// Manages SQLite database connections, schema initialization, and database operations.
@@ -210,7 +211,7 @@ internal sealed class DatabaseManager : IDisposable
     /// <param name="pragma">The PRAGMA statement (without the "PRAGMA " prefix).</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    [SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
         Justification = "PRAGMA values come from internal options, not user input")]
@@ -300,7 +301,7 @@ internal sealed class DatabaseManager : IDisposable
     /// <param name="connection">An open database connection.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns>A task representing the asynchronous table creation.</returns>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    [SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
         Justification = "SQL is built from validated internal options, not user input")]
@@ -375,7 +376,7 @@ internal sealed class DatabaseManager : IDisposable
     ///   <item><description>Individual indexes for custom columns where <see cref="CustomColumn.CreateIndex"/> is <c>true</c></description></item>
     /// </list>
     /// </remarks>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    [SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
         Justification = "SQL is built from validated internal options, not user input")]
@@ -447,7 +448,7 @@ internal sealed class DatabaseManager : IDisposable
     /// A task that represents the asynchronous operation. The task result contains
     /// the number of log entries in the configured table.
     /// </returns>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+    [SuppressMessage(
         "Security",
         "CA2100:Review SQL queries for security vulnerabilities",
         Justification = "TableName comes from validated internal options, not user input")]

@@ -1,10 +1,12 @@
-// Copyright (c) 2025 Your Company. All rights reserved.
+// Copyright (c) 2025- RAYCOON.com GmbH. All rights reserved.
+// Author: Daniel Pavic
 // Licensed under the Apache License, Version 2.0.
+// See LICENSE file in the project root for full license information.
 
+using Raycoon.Serilog.Sinks.SQLite.Options;
 using Serilog.Events;
-using Serilog.Sinks.SQLite.Modern.Options;
 
-namespace Serilog.Sinks.SQLite.Modern.Tests;
+namespace Raycoon.Serilog.Sinks.SQLite.Tests;
 
 public class SQLiteSinkOptionsTests
 {
