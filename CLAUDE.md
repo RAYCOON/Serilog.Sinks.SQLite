@@ -1,0 +1,57 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Serilog.Sinks.SQLite.Modern is a high-performance Serilog sink for SQLite databases. Key differentiators:
+- Uses `Microsoft.Data.Sqlite` for AnyCPU compatibility (not System.Data.SQLite)
+- Targets .NET 8.0, 9.0, and 10.0
+- Async batching via Serilog.Sinks.PeriodicBatching
+- Retention policies (time, count, size-based)
+- Custom columns support
+
+## Build Commands
+
+```bash
+dotnet restore           # Restore dependencies
+dotnet build             # Build all projects
+dotnet build -c Release  # Release build
+dotnet test              # Run all tests
+dotnet test --filter "FullyQualifiedName~TestMethodName"  # Run single test
+dotnet pack src/Serilog.Sinks.SQLite.Modern/ -c Release   # Create NuGet package
+dotnet run --project samples/SampleConsoleApp/SampleConsoleApp.csproj  # Run sample
+```
+
+## Architecture
+
+```
+src/Serilog.Sinks.SQLite.Modern/
+├── Extensions/SQLiteLoggerConfigurationExtensions.cs  # Public fluent API (.WriteTo.SQLite())
+├── Options/SQLiteSinkOptions.cs                       # Configuration + CustomColumn class
+├── Sinks/SQLiteSink.cs                                # Core sink (IBatchedLogEventSink)
+└── Internal/
+    ├── DatabaseManager.cs      # Connection pooling, schema, PRAGMA settings
+    ├── LogEventBatchWriter.cs  # Batch INSERT with transactions
+    └── RetentionManager.cs     # Background cleanup timer
+```
+
+**Key patterns:**
+- Batching via Serilog.Sinks.PeriodicBatching wrapping the sink
+- Schema created lazily on first write (SemaphoreSlim for thread safety)
+- All I/O is async with `ConfigureAwait(false)`
+- Connection pooling handled by Microsoft.Data.Sqlite
+
+## Testing
+
+- Framework: xUnit with FluentAssertions and NSubstitute
+- Tests run against all target frameworks (net8.0, net9.0, net10.0)
+- Test naming convention: underscores allowed (CA1707 suppressed)
+
+## Code Style
+
+- File-scoped namespaces (`csharp_style_namespace_declarations = file_scoped`)
+- Private fields prefixed with underscore (`_fieldName`)
+- `var` preferred when type is apparent
+- Warnings treated as errors
+- Nullable reference types enabled throughout
