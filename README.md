@@ -4,18 +4,18 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
 
-Eine moderne, hochperformante Serilog-Sink für SQLite-Datenbanken. Entwickelt für .NET 8+ mit vollständiger **AnyCPU**-Unterstützung.
+A modern, high-performance Serilog sink for SQLite databases. Developed for .NET 8+ with full **AnyCPU** support.
 
 ## Features
 
-- ✅ **AnyCPU-kompatibel** - Verwendet `Microsoft.Data.Sqlite` (kein natives SQLite)
-- ✅ **.NET 8.0, .NET 9.0 & .NET 10.0** Unterstützung
-- ✅ **Asynchrones Batching** - Optimale Performance durch Batch-Schreiben
-- ✅ **Automatische Retention** - Nach Zeit, Anzahl oder Datenbankgröße
-- ✅ **Custom Columns** - Strukturierte Daten in eigenen Spalten speichern
-- ✅ **WAL-Modus** - Optimiert für hohe Schreiblast
-- ✅ **Thread-sicher** - Vollständig für paralleles Logging geeignet
-- ✅ **Konfigurierbar** - Umfangreiche Optionen für jeden Anwendungsfall
+- **AnyCPU compatible** - Uses `Microsoft.Data.Sqlite` (no native SQLite required)
+- **.NET 8.0, .NET 9.0 & .NET 10.0** support
+- **Asynchronous batching** - Optimal performance through batch writing
+- **Automatic retention** - By time, count, or database size
+- **Custom columns** - Store structured data in dedicated columns
+- **WAL mode** - Optimized for high write load
+- **Thread-safe** - Fully suitable for parallel logging
+- **Configurable** - Extensive options for every use case
 
 ## Installation
 
@@ -23,9 +23,9 @@ Eine moderne, hochperformante Serilog-Sink für SQLite-Datenbanken. Entwickelt f
 dotnet add package Raycoon.Serilog.Sinks.SQLite
 ```
 
-## Schnellstart
+## Quick Start
 
-### Einfache Verwendung
+### Basic Usage
 
 ```csharp
 using Serilog;
@@ -37,11 +37,11 @@ var logger = new LoggerConfiguration()
 logger.Information("Hello, SQLite!");
 logger.Error(new Exception("Oops!"), "An error occurred");
 
-// Wichtig: Logger am Ende freigeben
+// Important: Dispose the logger at the end
 await Log.CloseAndFlushAsync();
 ```
 
-### Erweiterte Konfiguration
+### Advanced Configuration
 
 ```csharp
 using Serilog;
@@ -54,31 +54,31 @@ var logger = new LoggerConfiguration()
     .Enrich.WithThreadId()
     .WriteTo.SQLite("logs/app.db", options =>
     {
-        // Tabellenname
+        // Table name
         options.TableName = "ApplicationLogs";
-        
-        // Retention: Logs älter als 30 Tage löschen
+
+        // Retention: Delete logs older than 30 days
         options.RetentionPeriod = TimeSpan.FromDays(30);
-        
-        // Retention: Maximal 100.000 Einträge behalten
+
+        // Retention: Keep maximum 100,000 entries
         options.RetentionCount = 100_000;
-        
-        // Retention: Datenbank max. 100 MB
+
+        // Retention: Database max. 100 MB
         options.MaxDatabaseSize = 100 * 1024 * 1024;
-        
-        // Performance-Tuning
+
+        // Performance tuning
         options.BatchSizeLimit = 200;
         options.BatchPeriod = TimeSpan.FromSeconds(1);
         options.QueueLimit = 50000;
-        
-        // SQLite-Optimierungen
+
+        // SQLite optimizations
         options.JournalMode = SQLiteJournalMode.Wal;
         options.SynchronousMode = SQLiteSynchronousMode.Normal;
-        
-        // Zeitstempel in UTC
+
+        // Store timestamps in UTC
         options.StoreTimestampInUtc = true;
-        
-        // Minimum Log-Level für diese Sink
+
+        // Minimum log level for this sink
         options.RestrictedToMinimumLevel = LogEventLevel.Information;
     })
     .CreateLogger();
@@ -86,7 +86,7 @@ var logger = new LoggerConfiguration()
 
 ### Custom Columns
 
-Speichern Sie strukturierte Daten in eigenen Spalten für bessere Abfragen:
+Store structured data in dedicated columns for better queries:
 
 ```csharp
 var logger = new LoggerConfiguration()
@@ -97,16 +97,16 @@ var logger = new LoggerConfiguration()
             ColumnName = "UserId",
             DataType = "TEXT",
             PropertyName = "UserId",
-            CreateIndex = true // Index für schnelle Suche
+            CreateIndex = true // Index for fast searches
         });
-        
+
         options.CustomColumns.Add(new CustomColumn
         {
             ColumnName = "RequestId",
             DataType = "TEXT",
             PropertyName = "RequestId"
         });
-        
+
         options.CustomColumns.Add(new CustomColumn
         {
             ColumnName = "Duration",
@@ -116,7 +116,7 @@ var logger = new LoggerConfiguration()
     })
     .CreateLogger();
 
-// Verwendung
+// Usage
 logger
     .ForContext("UserId", "user123")
     .ForContext("RequestId", Guid.NewGuid())
@@ -124,147 +124,147 @@ logger
     .Information("Request processed");
 ```
 
-### Fehlerbehandlung
+### Error Handling
 
 ```csharp
 var logger = new LoggerConfiguration()
     .WriteTo.SQLite("logs/app.db", options =>
     {
-        options.OnError = ex => 
+        options.OnError = ex =>
         {
             Console.WriteLine($"SQLite Error: {ex.Message}");
-            // Oder: Fallback-Logger verwenden
+            // Or: Use a fallback logger
         };
-        
-        // Bei kritischen Fehlern Exception werfen
-        options.ThrowOnError = false; // Standard: false
+
+        // Throw exception on critical errors
+        options.ThrowOnError = false; // Default: false
     })
     .CreateLogger();
 ```
 
-## Datenbankschema
+## Database Schema
 
-Die Sink erstellt automatisch folgende Tabelle:
+The sink automatically creates the following table:
 
-| Spalte | Typ | Beschreibung |
-|--------|-----|--------------|
-| `Id` | INTEGER | Primärschlüssel (Auto-Increment) |
-| `Timestamp` | TEXT | ISO 8601 Zeitstempel |
-| `Level` | INTEGER | Log-Level (0-5) |
-| `LevelName` | TEXT | Log-Level Name |
-| `Message` | TEXT | Gerenderte Nachricht |
-| `MessageTemplate` | TEXT | Original Message Template |
-| `Exception` | TEXT | Exception Details (falls vorhanden) |
-| `Properties` | TEXT | Properties als JSON |
-| `SourceContext` | TEXT | Logger-Name / Quelle |
-| `MachineName` | TEXT | Computername |
-| `ThreadId` | INTEGER | Thread-ID |
+| Column | Type | Description |
+|--------|------|-------------|
+| `Id` | INTEGER | Primary key (auto-increment) |
+| `Timestamp` | TEXT | ISO 8601 timestamp |
+| `Level` | INTEGER | Log level (0-5) |
+| `LevelName` | TEXT | Log level name |
+| `Message` | TEXT | Rendered message |
+| `MessageTemplate` | TEXT | Original message template |
+| `Exception` | TEXT | Exception details (if present) |
+| `Properties` | TEXT | Properties as JSON |
+| `SourceContext` | TEXT | Logger name / source |
+| `MachineName` | TEXT | Computer name |
+| `ThreadId` | INTEGER | Thread ID |
 
-Plus alle konfigurierten Custom Columns.
+Plus all configured custom columns.
 
-## Abfragen der Logs
+## Querying Logs
 
 ```sql
--- Alle Fehler der letzten 24 Stunden
-SELECT * FROM Logs 
-WHERE Level >= 4 
+-- All errors from the last 24 hours
+SELECT * FROM Logs
+WHERE Level >= 4
 AND Timestamp > datetime('now', '-1 day')
 ORDER BY Timestamp DESC;
 
--- Logs nach UserId (wenn Custom Column konfiguriert)
-SELECT * FROM Logs 
-WHERE UserId = 'user123' 
-ORDER BY Timestamp DESC 
+-- Logs by UserId (if custom column configured)
+SELECT * FROM Logs
+WHERE UserId = 'user123'
+ORDER BY Timestamp DESC
 LIMIT 100;
 
--- Aggregation nach Level
-SELECT LevelName, COUNT(*) as Count 
-FROM Logs 
+-- Aggregation by level
+SELECT LevelName, COUNT(*) as Count
+FROM Logs
 GROUP BY Level;
 
--- Properties durchsuchen (JSON)
-SELECT * FROM Logs 
+-- Search through properties (JSON)
+SELECT * FROM Logs
 WHERE json_extract(Properties, '$.RequestId') = 'abc123';
 ```
 
-## Performance-Tipps
+## Performance Tips
 
-### 1. Batch-Größe optimieren
+### 1. Optimize Batch Size
 
 ```csharp
-options.BatchSizeLimit = 500;  // Für High-Volume
+options.BatchSizeLimit = 500;  // For high-volume
 options.BatchPeriod = TimeSpan.FromMilliseconds(100);
 ```
 
-### 2. WAL-Modus verwenden (Standard)
+### 2. Use WAL Mode (Default)
 
 ```csharp
 options.JournalMode = SQLiteJournalMode.Wal;
 ```
 
-### 3. Synchronous-Mode anpassen
+### 3. Adjust Synchronous Mode
 
 ```csharp
-// Schneller, aber weniger sicher bei Stromausfall
+// Faster, but less safe in case of power failure
 options.SynchronousMode = SQLiteSynchronousMode.Normal;
 
-// Oder für maximale Performance (nur wenn Datenverlust akzeptabel)
+// Or for maximum performance (only if data loss is acceptable)
 options.SynchronousMode = SQLiteSynchronousMode.Off;
 ```
 
-### 4. Queue-Limit setzen
+### 4. Set Queue Limit
 
 ```csharp
-// Verhindert Memory-Overflow bei Burst-Traffic
+// Prevents memory overflow during burst traffic
 options.QueueLimit = 100000;
 ```
 
-## Vergleich zu anderen SQLite Sinks
+## Comparison to Other SQLite Sinks
 
 | Feature | Raycoon.Serilog.Sinks.SQLite | Serilog.Sinks.SQLite |
 |---------|----------------------------|---------------------|
-| AnyCPU Support | ✅ (Microsoft.Data.Sqlite) | ❌ (System.Data.SQLite) |
-| .NET 8/9/10 | ✅ | ⚠️ (nur .NET 7) |
-| Async Batching | ✅ | ✅ |
-| Retention Policies | ✅ (Zeit, Anzahl, Größe) | ❌ |
-| Custom Columns | ✅ | ❌ |
-| WAL Mode | ✅ | ✅ |
+| AnyCPU Support | Yes (Microsoft.Data.Sqlite) | No (System.Data.SQLite) |
+| .NET 8/9/10 | Yes | Partial (.NET 7 only) |
+| Async Batching | Yes | Yes |
+| Retention Policies | Yes (time, count, size) | No |
+| Custom Columns | Yes | No |
+| WAL Mode | Yes | Yes |
 
-## API-Referenz
+## API Reference
 
 ### SQLiteSinkOptions
 
-| Property | Typ | Standard | Beschreibung |
-|----------|-----|----------|--------------|
-| `DatabasePath` | string | "logs.db" | Pfad zur Datenbank |
-| `TableName` | string | "Logs" | Tabellenname |
-| `StoreTimestampInUtc` | bool | true | UTC oder Lokalzeit |
-| `RestrictedToMinimumLevel` | LogEventLevel | Verbose | Minimum Level |
-| `RetentionPeriod` | TimeSpan? | null | Max. Alter der Logs |
-| `RetentionCount` | long? | null | Max. Anzahl Logs |
-| `MaxDatabaseSize` | long? | null | Max. DB-Größe (Bytes) |
-| `BatchSizeLimit` | int | 100 | Events pro Batch |
-| `BatchPeriod` | TimeSpan | 2s | Batch-Intervall |
-| `QueueLimit` | int? | 10000 | Max. Queue-Größe |
-| `JournalMode` | SQLiteJournalMode | Wal | SQLite Journal Mode |
-| `SynchronousMode` | SQLiteSynchronousMode | Normal | Sync Mode |
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `DatabasePath` | string | "logs.db" | Path to the database |
+| `TableName` | string | "Logs" | Table name |
+| `StoreTimestampInUtc` | bool | true | UTC or local time |
+| `RestrictedToMinimumLevel` | LogEventLevel | Verbose | Minimum level |
+| `RetentionPeriod` | TimeSpan? | null | Max. age of logs |
+| `RetentionCount` | long? | null | Max. number of logs |
+| `MaxDatabaseSize` | long? | null | Max. DB size (bytes) |
+| `BatchSizeLimit` | int | 100 | Events per batch |
+| `BatchPeriod` | TimeSpan | 2s | Batch interval |
+| `QueueLimit` | int? | 10000 | Max. queue size |
+| `JournalMode` | SQLiteJournalMode | Wal | SQLite journal mode |
+| `SynchronousMode` | SQLiteSynchronousMode | Normal | Sync mode |
 
-## Lizenz
+## License
 
-Apache 2.0 - Siehe [LICENSE](LICENSE) für Details.
+Apache 2.0 - See [LICENSE](LICENSE) for details.
 
-## Beitragen
+## Contributing
 
-Pull Requests sind willkommen! Bitte öffnen Sie zuerst ein Issue, um Änderungen zu diskutieren.
+Pull requests are welcome! Please open an issue first to discuss proposed changes.
 
 ## Changelog
 
 ### 1.0.0
 
 - Initial Release
-- .NET 8.0, .NET 9.0 und .NET 10.0 Support
-- AnyCPU-Kompatibilität mit Microsoft.Data.Sqlite
-- Async Batching
-- Retention Policies (Zeit, Anzahl, Größe)
-- Custom Columns
-- WAL Mode Support
+- .NET 8.0, .NET 9.0 and .NET 10.0 support
+- AnyCPU compatibility with Microsoft.Data.Sqlite
+- Async batching
+- Retention policies (time, count, size)
+- Custom columns
+- WAL mode support
