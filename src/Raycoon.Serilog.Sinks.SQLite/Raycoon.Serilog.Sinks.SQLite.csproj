@@ -17,7 +17,7 @@
 
     <!-- NuGet Package Identification -->
     <PackageId>Raycoon.Serilog.Sinks.SQLite</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Daniel Pavic</Authors>
     <Company>RAYCOON.com GmbH</Company>
     <Copyright>Copyright (c) 2025- RAYCOON.com GmbH</Copyright>
@@ -26,7 +26,7 @@
     <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
     <PackageDescription>$(Description)</PackageDescription>
     <PackageTags>serilog;sqlite;logging;sink;database;structured-logging;batching;retention</PackageTags>
-    <PackageReleaseNotes>Bumping Version to v1.0.2</PackageReleaseNotes>
+    <PackageReleaseNotes>Fix: Removed duplicate workflow trigger (release + tag push)</PackageReleaseNotes>
 
     <!-- Package URLs -->
     <PackageProjectUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite</PackageProjectUrl>

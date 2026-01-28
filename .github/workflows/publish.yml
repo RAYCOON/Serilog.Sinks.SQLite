@@ -4,10 +4,6 @@ on:
   # Manueller Trigger über GitHub UI
   workflow_dispatch:
 
-  # Bei GitHub Release (bestehend)
-  release:
-    types: [published]
-
   # Bei Push von Version-Tags
   push:
     tags:
