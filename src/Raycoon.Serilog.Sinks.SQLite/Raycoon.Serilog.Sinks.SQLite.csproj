@@ -20,7 +20,7 @@
     <Version>1.0.0</Version>
     <Authors>Daniel Pavic</Authors>
     <Company>RAYCOON.com GmbH</Company>
-    <Copyright>Copyright (c) 2025 RAYCOON.com GmbH</Copyright>
+    <Copyright>Copyright (c) 2025- RAYCOON.com GmbH</Copyright>
 
     <!-- Package Description -->
     <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
@@ -29,8 +29,8 @@
     <PackageReleaseNotes>Initial release with full feature set: async batching, retention policies, custom columns, and SQLite performance tuning.</PackageReleaseNotes>
 
     <!-- Package URLs -->
-    <PackageProjectUrl>https://github.com/raycoon/Raycoon.Serilog.Sinks.SQLite</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/raycoon/Raycoon.Serilog.Sinks.SQLite.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 
     <!-- License -->

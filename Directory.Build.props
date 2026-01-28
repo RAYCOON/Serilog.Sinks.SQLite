@@ -11,13 +11,13 @@
     <AnalysisLevel>latest-all</AnalysisLevel>
     
     <!-- Package-Metadaten -->
-    <Authors>Your Name</Authors>
-    <Company>Your Company</Company>
-    <Copyright>Copyright © 2025 Your Company</Copyright>
+    <Authors>Daniel Pavic</Authors>
+    <Company>RAYCOON.com GmbH</Company>
+    <Copyright>Copyright (c) 2025- RAYCOON.com GmbH</Copyright>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/yourname/serilog-sinks-sqlite-modern</RepositoryUrl>
+    <RepositoryUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite.git</RepositoryUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/yourname/serilog-sinks-sqlite-modern</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>serilog;sqlite;logging;sink;database</PackageTags>
   </PropertyGroup>
