@@ -234,20 +234,55 @@ options.QueueLimit = 100000;
 
 ### SQLiteSinkOptions
 
+#### Database
+
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `DatabasePath` | string | "logs.db" | Path to the database |
-| `TableName` | string | "Logs" | Table name |
-| `StoreTimestampInUtc` | bool | true | UTC or local time |
-| `RestrictedToMinimumLevel` | LogEventLevel | Verbose | Minimum level |
-| `RetentionPeriod` | TimeSpan? | null | Max. age of logs |
-| `RetentionCount` | long? | null | Max. number of logs |
-| `MaxDatabaseSize` | long? | null | Max. DB size (bytes) |
-| `BatchSizeLimit` | int | 100 | Events per batch |
-| `BatchPeriod` | TimeSpan | 2s | Batch interval |
-| `QueueLimit` | int? | 10000 | Max. queue size |
-| `JournalMode` | SQLiteJournalMode | Wal | SQLite journal mode |
-| `SynchronousMode` | SQLiteSynchronousMode | Normal | Sync mode |
+| `DatabasePath` | string | "logs.db" | Path to the SQLite database file |
+| `TableName` | string | "Logs" | Name of the log table |
+| `AutoCreateDatabase` | bool | true | Auto-create database file if not exists |
+
+#### Logging Behavior
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RestrictedToMinimumLevel` | LogEventLevel | Verbose | Minimum log level to capture |
+| `StoreTimestampInUtc` | bool | true | Store timestamps in UTC (false = local time) |
+| `StorePropertiesAsJson` | bool | true | Store log event properties as JSON |
+| `StoreExceptionDetails` | bool | true | Store exception details in separate column |
+
+#### Data Limits
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `MaxMessageLength` | int? | null | Max rendered message length (null = unlimited) |
+| `MaxExceptionLength` | int? | null | Max exception text length (null = unlimited) |
+| `MaxPropertiesLength` | int? | null | Max properties JSON length (null = unlimited) |
+
+#### Batching & Performance
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `BatchSizeLimit` | int | 100 | Max events per batch write |
+| `BatchPeriod` | TimeSpan | 2s | Interval between batch writes |
+| `QueueLimit` | int? | 10000 | Max events in memory queue (null = unlimited) |
+
+#### Retention Policy
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RetentionPeriod` | TimeSpan? | null | Delete logs older than this (null = disabled) |
+| `RetentionCount` | long? | null | Keep only this many logs (null = disabled) |
+| `MaxDatabaseSize` | long? | null | Max database size in bytes (null = disabled) |
+| `CleanupInterval` | TimeSpan | 1h | Interval for retention cleanup checks |
+
+#### SQLite Configuration
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `JournalMode` | SQLiteJournalMode | Wal | SQLite journal mode (Wal recommended) |
+| `SynchronousMode` | SQLiteSynchronousMode | Normal | SQLite synchronous mode |
+| `AdditionalConnectionParameters` | Dictionary | {} | Extra SQLite connection string parameters |
 
 ## License
 
