@@ -142,6 +142,143 @@ var logger = new LoggerConfiguration()
     .CreateLogger();
 ```
 
+### JSON Configuration (appsettings.json)
+
+The sink supports full configuration via `appsettings.json` using `Serilog.Settings.Configuration`:
+
+```bash
+dotnet add package Serilog.Settings.Configuration
+dotnet add package Microsoft.Extensions.Configuration.Json
+```
+
+#### Basic JSON Configuration
+
+```json
+{
+  "Serilog": {
+    "Using": ["Raycoon.Serilog.Sinks.SQLite"],
+    "MinimumLevel": "Information",
+    "WriteTo": [
+      {
+        "Name": "SQLite",
+        "Args": {
+          "databasePath": "logs/app.db"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Full JSON Configuration
+
+```json
+{
+  "Serilog": {
+    "Using": ["Raycoon.Serilog.Sinks.SQLite"],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "SQLite",
+        "Args": {
+          "databasePath": "logs/app.db",
+          "tableName": "ApplicationLogs",
+          "restrictedToMinimumLevel": "Information",
+          "storeTimestampInUtc": true,
+          "autoCreateDatabase": true,
+          "storePropertiesAsJson": true,
+          "storeExceptionDetails": true,
+          "maxMessageLength": 10000,
+          "maxExceptionLength": 20000,
+          "maxPropertiesLength": 10000,
+          "batchSizeLimit": 200,
+          "batchPeriod": "00:00:01",
+          "queueLimit": 50000,
+          "retentionPeriod": "30.00:00:00",
+          "retentionCount": 100000,
+          "maxDatabaseSize": 104857600,
+          "cleanupInterval": "01:00:00",
+          "journalMode": "Wal",
+          "synchronousMode": "Normal",
+          "throwOnError": false,
+          "customColumns": [
+            {
+              "columnName": "UserId",
+              "dataType": "TEXT",
+              "propertyName": "UserId",
+              "allowNull": true,
+              "createIndex": true
+            },
+            {
+              "columnName": "RequestId",
+              "dataType": "TEXT",
+              "propertyName": "RequestId",
+              "allowNull": true,
+              "createIndex": false
+            },
+            {
+              "columnName": "Duration",
+              "dataType": "REAL",
+              "propertyName": "DurationMs",
+              "allowNull": true,
+              "createIndex": false
+            }
+          ]
+        }
+      }
+    ],
+    "Enrich": ["FromLogContext"]
+  }
+}
+```
+
+#### C# Setup for JSON Configuration
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using Serilog;
+
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration)
+    .CreateLogger();
+```
+
+#### TimeSpan Format in JSON
+
+| Format | Example | Description |
+|--------|---------|-------------|
+| `hh:mm:ss` | `"00:00:02"` | 2 seconds |
+| `hh:mm:ss.fff` | `"00:00:00.500"` | 500 milliseconds |
+| `d.hh:mm:ss` | `"7.00:00:00"` | 7 days |
+| `d.hh:mm:ss` | `"30.00:00:00"` | 30 days |
+
+#### Enum Values in JSON
+
+| Property | Valid Values |
+|----------|-------------|
+| `journalMode` | `"Delete"`, `"Truncate"`, `"Persist"`, `"Memory"`, `"Wal"`, `"Off"` |
+| `synchronousMode` | `"Off"`, `"Normal"`, `"Full"`, `"Extra"` |
+| `restrictedToMinimumLevel` | `"Verbose"`, `"Debug"`, `"Information"`, `"Warning"`, `"Error"`, `"Fatal"` |
+
+#### Limitations
+
+The following options are **not available** via JSON configuration:
+- `OnError` callback (delegates cannot be serialized)
+- `AdditionalConnectionParameters` (dictionary binding is complex)
+
+Use programmatic configuration for these features.
+
 ## Database Schema
 
 The sink automatically creates the following table:

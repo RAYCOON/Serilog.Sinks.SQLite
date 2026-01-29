@@ -645,8 +645,13 @@ public enum SQLiteSynchronousMode
 ///   <item><description>Proper data typing (INTEGER, REAL, TEXT, BLOB)</description></item>
 ///   <item><description>Index creation for frequently queried properties</description></item>
 /// </list>
+/// <para>
+/// This class supports both programmatic configuration using object initializers and
+/// JSON configuration via <c>Serilog.Settings.Configuration</c>.
+/// </para>
 /// </remarks>
 /// <example>
+/// Programmatic configuration:
 /// <code>
 /// var userIdColumn = new CustomColumn
 /// {
@@ -661,6 +666,29 @@ public enum SQLiteSynchronousMode
 /// logger.ForContext("UserId", userId).Information("User logged in");
 /// </code>
 /// </example>
+/// <example>
+/// JSON configuration (appsettings.json):
+/// <code>
+/// {
+///   "Serilog": {
+///     "WriteTo": [{
+///       "Name": "SQLite",
+///       "Args": {
+///         "databasePath": "logs/app.db",
+///         "customColumns": [
+///           {
+///             "columnName": "UserId",
+///             "dataType": "TEXT",
+///             "propertyName": "UserId",
+///             "createIndex": true
+///           }
+///         ]
+///       }
+///     }]
+///   }
+/// }
+/// </code>
+/// </example>
 public sealed class CustomColumn
 {
     /// <summary>
@@ -673,13 +701,13 @@ public sealed class CustomColumn
     /// The column name should follow SQLite naming conventions and avoid reserved words.
     /// It doesn't need to match the property name.
     /// </remarks>
-    public required string ColumnName { get; init; }
+    public string ColumnName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the SQLite data type for the column.
     /// </summary>
     /// <value>
-    /// The SQLite data type (e.g., TEXT, INTEGER, REAL, BLOB).
+    /// The SQLite data type (e.g., TEXT, INTEGER, REAL, BLOB). Default is <c>"TEXT"</c>.
     /// </value>
     /// <remarks>
     /// Common SQLite types include:
@@ -690,7 +718,7 @@ public sealed class CustomColumn
     ///   <item><description>BLOB - for binary data</description></item>
     /// </list>
     /// </remarks>
-    public required string DataType { get; init; }
+    public string DataType { get; set; } = "TEXT";
 
     /// <summary>
     /// Gets or sets the name of the Serilog property to extract the value from.
@@ -702,7 +730,7 @@ public sealed class CustomColumn
     /// This is the property name used with <c>ForContext</c> or in message templates.
     /// The property must be a scalar value (not an object or array) to be stored correctly.
     /// </remarks>
-    public required string PropertyName { get; init; }
+    public string PropertyName { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets whether the column allows NULL values.
@@ -715,7 +743,7 @@ public sealed class CustomColumn
     /// Set to <c>false</c> only if every log event is guaranteed to have this property.
     /// Logging events without the property when <c>AllowNull</c> is <c>false</c> will cause errors.
     /// </remarks>
-    public bool AllowNull { get; init; } = true;
+    public bool AllowNull { get; set; } = true;
 
     /// <summary>
     /// Gets or sets whether an index should be created on this column.
@@ -728,5 +756,24 @@ public sealed class CustomColumn
     /// Create an index for columns that are frequently used in WHERE clauses or JOINs.
     /// Indexes improve query performance but slightly increase write time and storage space.
     /// </remarks>
-    public bool CreateIndex { get; init; }
+    public bool CreateIndex { get; set; }
+
+    /// <summary>
+    /// Validates the custom column configuration.
+    /// </summary>
+    /// <exception cref="ArgumentException">
+    /// Thrown when <see cref="ColumnName"/> or <see cref="PropertyName"/> is null or whitespace.
+    /// </exception>
+    internal void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(ColumnName))
+        {
+            throw new ArgumentException("CustomColumn.ColumnName must not be empty.", nameof(ColumnName));
+        }
+
+        if (string.IsNullOrWhiteSpace(PropertyName))
+        {
+            throw new ArgumentException("CustomColumn.PropertyName must not be empty.", nameof(PropertyName));
+        }
+    }
 }

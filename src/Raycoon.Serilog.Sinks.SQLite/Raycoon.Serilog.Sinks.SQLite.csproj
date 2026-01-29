@@ -5,19 +5,19 @@
     <RootNamespace>Serilog</RootNamespace>
     <AssemblyName>Raycoon.Serilog.Sinks.SQLite</AssemblyName>
 
-    <!-- Analyzer-Warnungen unterdrücken, die für Library-Code nicht relevant sind -->
-    <!-- CA2007: ConfigureAwait - Library verwendet bereits ConfigureAwait(false) wo nötig -->
-    <!-- CA1031: Catch generische Exception - Logging-Sink muss robust sein -->
-    <!-- CA1305: IFormatProvider - Interne SQL-Strings sind kultur-unabhängig -->
-    <!-- CA2227: Collection properties - Options-Pattern erfordert settable Collections -->
-    <!-- CA1805: Explizite Default-Initialisierung - Verbessert Lesbarkeit -->
-    <!-- CA1002: Collection<T> statt List<T> - Collection wird bereits verwendet -->
-    <!-- CA2100: SQL Injection - SQL wird aus internen Optionen gebaut, nicht User-Input -->
+    <!-- Suppress analyzer warnings that are not relevant for library code -->
+    <!-- CA2007: ConfigureAwait - Library already uses ConfigureAwait(false) where needed -->
+    <!-- CA1031: Catch generic exception - Logging sink must be robust -->
+    <!-- CA1305: IFormatProvider - Internal SQL strings are culture-independent -->
+    <!-- CA2227: Collection properties - Options pattern requires settable collections -->
+    <!-- CA1805: Explicit default initialization - Improves readability -->
+    <!-- CA1002: Collection<T> instead of List<T> - Collection is already used -->
+    <!-- CA2100: SQL Injection - SQL is built from internal options, not user input -->
     <NoWarn>$(NoWarn);CA2007;CA1031;CA1305;CA2227;CA1805;CA1002;CA2100</NoWarn>
 
     <!-- NuGet Package Identification -->
     <PackageId>Raycoon.Serilog.Sinks.SQLite</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>Daniel Pavic</Authors>
     <Company>RAYCOON.com GmbH</Company>
     <Copyright>Copyright (c) 2025- RAYCOON.com GmbH</Copyright>
@@ -26,7 +26,7 @@
     <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
     <PackageDescription>$(Description)</PackageDescription>
     <PackageTags>serilog;sqlite;logging;sink;database;structured-logging;batching;retention</PackageTags>
-    <PackageReleaseNotes>Fix: Removed duplicate workflow trigger (release + tag push)</PackageReleaseNotes>
+    <PackageReleaseNotes>Add JSON configuration support</PackageReleaseNotes>
 
     <!-- Package URLs -->
     <PackageProjectUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite</PackageProjectUrl>

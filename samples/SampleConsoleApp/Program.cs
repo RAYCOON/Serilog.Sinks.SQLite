@@ -324,58 +324,67 @@ Console.WriteLine($"{messageCount:N0} messages written in {stopwatch.ElapsedMill
 Console.WriteLine($"  Throughput: {messageCount / stopwatch.Elapsed.TotalSeconds:N0} msgs/sec\n");
 
 // ────────────────────────────────────────────────────────────────────────────
-// EXAMPLE 5: JSON Configuration
+// EXAMPLE 5: Full JSON Configuration (appsettings.json)
 // ────────────────────────────────────────────────────────────────────────────
-// Integration with Microsoft.Extensions.Configuration:
+// Complete sink configuration via appsettings.json:
 //
-// - Read minimum levels from appsettings.json
-// - Override levels per namespace (e.g., suppress Microsoft.* noise)
-// - Combine with programmatic SQLite sink configuration
+// - Database path, table name, and all sink options
+// - Custom columns with indexes for efficient SQL queries
+// - Retention policies (time, count, size)
+// - Performance settings (batching, journal mode)
+// - Minimum level overrides per namespace
 //
-// Note: The SQLite sink itself can also be configured via JSON using
-// Serilog.Settings.Configuration, but this example shows the hybrid approach.
+// This demonstrates the new JSON configuration support added to the sink.
+// See the accompanying appsettings.json file for the full configuration.
+//
+// Supported TimeSpan formats in JSON:
+// - "00:00:01" (1 second)
+// - "00:30:00" (30 minutes)
+// - "7.00:00:00" (7 days)
+//
+// Supported enum values:
+// - journalMode: "Delete", "Truncate", "Persist", "Memory", "Wal", "Off"
+// - synchronousMode: "Off", "Normal", "Full", "Extra"
+//
+// Note: OnError callback and AdditionalConnectionParameters are not available
+// via JSON configuration as they cannot be serialized.
 // ────────────────────────────────────────────────────────────────────────────
-Console.WriteLine("Example 5: JSON Configuration");
+Console.WriteLine("Example 5: Full JSON Configuration (appsettings.json)");
 Console.WriteLine(new string('-', 40));
-
-// Create a temporary appsettings.json
-var appSettingsContent = """
-{
-  "Serilog": {
-    "MinimumLevel": {
-      "Default": "Information",
-      "Override": {
-        "Microsoft": "Warning",
-        "System": "Warning"
-      }
-    }
-  }
-}
-""";
-
-await File.WriteAllTextAsync("appsettings.json", appSettingsContent);
 
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .Build();
 
+// The entire logger configuration comes from appsettings.json
+// including the SQLite sink with custom columns
 await using (var configLogger = new LoggerConfiguration()
     .ReadFrom.Configuration(configuration)
-    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
-    .WriteTo.SQLite("logs/configured.db", options =>
-    {
-        options.TableName = "ConfiguredLogs";
-    })
     .CreateLogger())
 {
-    configLogger.Information("Log from JSON-configured logger");
+    // These logs will be written to logs/json-configured.db
+    // with custom columns UserId, RequestId, and Duration
+    configLogger.Information("Log from fully JSON-configured logger");
     configLogger.Debug("This debug message is filtered (MinLevel=Information)");
 
-    await Task.Delay(500);
+    // Simulate application logs with custom properties
+    var random = new Random();
+    for (var i = 0; i < 10; i++)
+    {
+        using (LogContext.PushProperty("UserId", $"user{random.Next(1, 5)}"))
+        using (LogContext.PushProperty("RequestId", Guid.NewGuid().ToString("N")[..8]))
+        using (LogContext.PushProperty("Duration", random.NextDouble() * 500))
+        {
+            configLogger.Information("Processing request {RequestNumber}", i + 1);
+        }
+    }
+
+    await Task.Delay(1500);
 }
 
-Console.WriteLine("Logs written via JSON-configured logger\n");
+Console.WriteLine("Logs written via fully JSON-configured logger");
+Console.WriteLine("Check logs/json-configured.db - custom columns (UserId, RequestId, Duration) are populated\n");
 
 // ────────────────────────────────────────────────────────────────────────────
 // Summary
