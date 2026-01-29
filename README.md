@@ -273,11 +273,59 @@ var logger = new LoggerConfiguration()
 
 #### Limitations
 
+> **Note:** This is a fundamental limitation of the Serilog ecosystem, not specific to this sink.
+> All Serilog sinks face this constraint because `Serilog.Settings.Configuration` can only bind
+> serializable types from JSON.
+
 The following options are **not available** via JSON configuration:
 - `OnError` callback (delegates cannot be serialized)
 - `AdditionalConnectionParameters` (dictionary binding is complex)
 
-Use programmatic configuration for these features.
+**Option 1: Full Programmatic Configuration (Recommended when callbacks are needed)**
+
+Use the action-based overload for complete control:
+
+```csharp
+var logger = new LoggerConfiguration()
+    .WriteTo.SQLite("logs/app.db", options =>
+    {
+        // All settings configured programmatically
+        options.TableName = "ApplicationLogs";
+        options.RetentionPeriod = TimeSpan.FromDays(30);
+        options.BatchSizeLimit = 200;
+        options.JournalMode = SQLiteJournalMode.Wal;
+
+        // Callback options (not available via JSON)
+        options.OnError = ex => Console.WriteLine($"SQLite error: {ex.Message}");
+        options.AdditionalConnectionParameters["Password"] = "mySecurePassword";
+    })
+    .CreateLogger();
+```
+
+**Option 2: Hybrid Approach (JSON for other sinks, programmatic for SQLite)**
+
+If you need JSON configuration for other parts of your logging pipeline:
+
+```csharp
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(configuration)  // Loads MinimumLevel, other sinks, enrichers
+    .WriteTo.SQLite("logs/app.db", options =>
+    {
+        // SQLite-specific settings with callback support
+        options.TableName = "ApplicationLogs";
+        options.OnError = ex => MyErrorHandler(ex);
+    })
+    .CreateLogger();
+```
+
+> **Why can't I just add callbacks to a JSON-configured sink?**
+>
+> Serilog's architecture creates sinks during `ReadFrom.Configuration()` and doesn't expose
+> them for modification afterwards. This is by design for thread-safety and immutability.
 
 ## Database Schema
 
