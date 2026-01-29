@@ -424,19 +424,3 @@ options.QueueLimit = 100000;
 ## License
 
 Apache 2.0 - See [LICENSE](LICENSE) for details.
-
-## Contributing
-
-Pull requests are welcome! Please open an issue first to discuss proposed changes.
-
-## Changelog
-
-### 1.0.0
-
-- Initial Release
-- .NET 8.0, .NET 9.0 and .NET 10.0 support
-- AnyCPU compatibility with Microsoft.Data.Sqlite
-- Async batching
-- Retention policies (time, count, size)
-- Custom columns
-- WAL mode support

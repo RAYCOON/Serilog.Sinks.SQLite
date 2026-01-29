@@ -1,10 +1,10 @@
 name: Publish to NuGet
 
 on:
-  # Manueller Trigger über GitHub UI
+  # Manual trigger via GitHub UI
   workflow_dispatch:
 
-  # Bei Push von Version-Tags
+  # When pushing version-tags
   push:
     tags:
       - 'v*'

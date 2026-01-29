@@ -3,11 +3,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-    <!-- CA2007: ConfigureAwait ist in Konsolen-Apps ohne SynchronizationContext nicht relevant -->
-    <!-- CA1303: Lokalisierung von Konsolen-Ausgaben für Demo-App nicht erforderlich -->
-    <!-- CA5394: Random ist für Demo-Zwecke (Log-Simulation) ausreichend, keine Sicherheitsrelevanz -->
-    <!-- CA1031: Allgemeiner Exception-Catch in Demo-App für Exception-Logging-Beispiel akzeptabel -->
-    <!-- CA2201: Generische Exception-Typen in Demo zur Demonstration von Exception-Logging -->
+    <!-- CA2007: ConfigureAwait - Not relevant in console apps without SynchronizationContext -->
+    <!-- CA1303: Localization of console output - Not required for demo app -->
+    <!-- CA5394: Random is sufficient for demo purposes (log simulation), no security relevance -->
+    <!-- CA1031: Generic exception catch - Acceptable in demo app for exception logging example -->
+    <!-- CA2201: Generic exception types - Used in demo for exception logging demonstration -->
     <NoWarn>$(NoWarn);CA2007;CA1303;CA5394;CA1031;CA2201</NoWarn>
   </PropertyGroup>
 

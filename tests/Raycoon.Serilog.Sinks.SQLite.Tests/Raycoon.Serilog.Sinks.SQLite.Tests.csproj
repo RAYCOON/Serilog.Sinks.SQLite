@@ -7,12 +7,12 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
 
-    <!-- Analyzer-Warnungen unterdrücken, die für Test-Code nicht relevant sind -->
-    <!-- CA1707: Unterstriche in Membernamen - Standard für Testnamen -->
-    <!-- CA2007: ConfigureAwait - In Tests nicht kritisch -->
-    <!-- CA1031: Catch generische Exception - In Tests oft notwendig -->
-    <!-- CA1063: IDisposable korrekt implementieren - Vereinfacht für Tests -->
-    <!-- CA1816: GC.SuppressFinalize - Vereinfacht für Tests -->
+    <!-- Suppress analyzer warnings that are not relevant for test code -->
+    <!-- CA1707: Underscores in member names - Standard for test names -->
+    <!-- CA2007: ConfigureAwait - Not critical in tests -->
+    <!-- CA1031: Catch generic exception - Often necessary in tests -->
+    <!-- CA1063: Implement IDisposable correctly - Simplified for tests -->
+    <!-- CA1816: GC.SuppressFinalize - Simplified for tests -->
     <NoWarn>$(NoWarn);CA1707;CA2007;CA1031;CA1063;CA1816</NoWarn>  </PropertyGroup>
 
   <ItemGroup>

@@ -423,42 +423,42 @@ public sealed class SQLiteSinkOptions
     {
         if (string.IsNullOrWhiteSpace(DatabasePath))
         {
-            throw new ArgumentException("DatabasePath darf nicht leer sein.", nameof(DatabasePath));
+            throw new ArgumentException("DatabasePath must not be empty.", nameof(DatabasePath));
         }
 
         if (string.IsNullOrWhiteSpace(TableName))
         {
-            throw new ArgumentException("TableName darf nicht leer sein.", nameof(TableName));
+            throw new ArgumentException("TableName must not be empty.", nameof(TableName));
         }
 
         if (BatchSizeLimit <= 0)
         {
-            throw new ArgumentException("BatchSizeLimit muss größer als 0 sein.", nameof(BatchSizeLimit));
+            throw new ArgumentException("BatchSizeLimit must be greater than 0.", nameof(BatchSizeLimit));
         }
 
         if (BatchPeriod <= TimeSpan.Zero)
         {
-            throw new ArgumentException("BatchPeriod muss größer als 0 sein.", nameof(BatchPeriod));
+            throw new ArgumentException("BatchPeriod must be greater than 0.", nameof(BatchPeriod));
         }
 
         if (QueueLimit.HasValue && QueueLimit.Value <= 0)
         {
-            throw new ArgumentException("QueueLimit muss größer als 0 sein.", nameof(QueueLimit));
+            throw new ArgumentException("QueueLimit must be greater than 0.", nameof(QueueLimit));
         }
 
         if (RetentionCount.HasValue && RetentionCount.Value <= 0)
         {
-            throw new ArgumentException("RetentionCount muss größer als 0 sein.", nameof(RetentionCount));
+            throw new ArgumentException("RetentionCount must be greater than 0.", nameof(RetentionCount));
         }
 
         if (RetentionPeriod.HasValue && RetentionPeriod.Value <= TimeSpan.Zero)
         {
-            throw new ArgumentException("RetentionPeriod muss größer als 0 sein.", nameof(RetentionPeriod));
+            throw new ArgumentException("RetentionPeriod must be greater than 0.", nameof(RetentionPeriod));
         }
 
         if (MaxDatabaseSize.HasValue && MaxDatabaseSize.Value <= 0)
         {
-            throw new ArgumentException("MaxDatabaseSize muss größer als 0 sein.", nameof(MaxDatabaseSize));
+            throw new ArgumentException("MaxDatabaseSize must be greater than 0.", nameof(MaxDatabaseSize));
         }
     }
 
