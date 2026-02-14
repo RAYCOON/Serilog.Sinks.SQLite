@@ -417,6 +417,10 @@ public sealed class SQLiteSinkOptions
     ///   <item><description>RetentionCount (if set) is greater than 0</description></item>
     ///   <item><description>RetentionPeriod (if set) is greater than 0</description></item>
     ///   <item><description>MaxDatabaseSize (if set) is greater than 0</description></item>
+    ///   <item><description>CleanupInterval is greater than 0</description></item>
+    ///   <item><description>MaxMessageLength (if set) is greater than 0</description></item>
+    ///   <item><description>MaxExceptionLength (if set) is greater than 0</description></item>
+    ///   <item><description>MaxPropertiesLength (if set) is greater than 0</description></item>
     /// </list>
     /// </remarks>
     public void Validate()
@@ -459,6 +463,26 @@ public sealed class SQLiteSinkOptions
         if (MaxDatabaseSize.HasValue && MaxDatabaseSize.Value <= 0)
         {
             throw new ArgumentException("MaxDatabaseSize must be greater than 0.", nameof(MaxDatabaseSize));
+        }
+
+        if (CleanupInterval <= TimeSpan.Zero)
+        {
+            throw new ArgumentException("CleanupInterval must be greater than 0.", nameof(CleanupInterval));
+        }
+
+        if (MaxMessageLength.HasValue && MaxMessageLength.Value <= 0)
+        {
+            throw new ArgumentException("MaxMessageLength must be greater than 0.", nameof(MaxMessageLength));
+        }
+
+        if (MaxExceptionLength.HasValue && MaxExceptionLength.Value <= 0)
+        {
+            throw new ArgumentException("MaxExceptionLength must be greater than 0.", nameof(MaxExceptionLength));
+        }
+
+        if (MaxPropertiesLength.HasValue && MaxPropertiesLength.Value <= 0)
+        {
+            throw new ArgumentException("MaxPropertiesLength must be greater than 0.", nameof(MaxPropertiesLength));
         }
     }
 

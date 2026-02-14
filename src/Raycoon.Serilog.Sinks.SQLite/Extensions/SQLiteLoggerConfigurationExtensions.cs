@@ -92,9 +92,16 @@ public static class SQLiteLoggerConfigurationExtensions
         string databasePath,
         Action<SQLiteSinkOptions> configure)
     {
+#if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(loggerConfiguration);
         ArgumentException.ThrowIfNullOrWhiteSpace(databasePath);
         ArgumentNullException.ThrowIfNull(configure);
+#else
+        if (loggerConfiguration is null) throw new ArgumentNullException(nameof(loggerConfiguration));
+        if (databasePath is null) throw new ArgumentNullException(nameof(databasePath));
+        if (string.IsNullOrWhiteSpace(databasePath)) throw new ArgumentException("The value cannot be an empty string or composed entirely of whitespace.", nameof(databasePath));
+        if (configure is null) throw new ArgumentNullException(nameof(configure));
+#endif
 
         var options = new SQLiteSinkOptions
         {
@@ -258,8 +265,14 @@ public static class SQLiteLoggerConfigurationExtensions
         bool throwOnError = false,
         CustomColumn[]? customColumns = null)
     {
+#if NET8_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(loggerConfiguration);
         ArgumentException.ThrowIfNullOrWhiteSpace(databasePath);
+#else
+        if (loggerConfiguration is null) throw new ArgumentNullException(nameof(loggerConfiguration));
+        if (databasePath is null) throw new ArgumentNullException(nameof(databasePath));
+        if (string.IsNullOrWhiteSpace(databasePath)) throw new ArgumentException("The value cannot be an empty string or composed entirely of whitespace.", nameof(databasePath));
+#endif
 
         var options = new SQLiteSinkOptions
         {
@@ -341,8 +354,13 @@ public static class SQLiteLoggerConfigurationExtensions
         this LoggerSinkConfiguration loggerConfiguration,
         SQLiteSinkOptions options)
     {
+#if NET6_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(loggerConfiguration);
         ArgumentNullException.ThrowIfNull(options);
+#else
+        if (loggerConfiguration is null) throw new ArgumentNullException(nameof(loggerConfiguration));
+        if (options is null) throw new ArgumentNullException(nameof(options));
+#endif
 
         return loggerConfiguration.Sink(
             SQLiteSinkFactory.Create(options),

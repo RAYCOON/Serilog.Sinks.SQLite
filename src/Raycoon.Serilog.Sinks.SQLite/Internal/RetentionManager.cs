@@ -118,7 +118,9 @@ internal sealed class RetentionManager : IDisposable, IAsyncDisposable
             return;
         }
 
+#if NET6_0_OR_GREATER
         using var timer = new PeriodicTimer(_options.CleanupInterval);
+#endif
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -137,7 +139,11 @@ internal sealed class RetentionManager : IDisposable, IAsyncDisposable
 
             try
             {
+#if NET6_0_OR_GREATER
                 await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false);
+#else
+                await Task.Delay(_options.CleanupInterval, cancellationToken).ConfigureAwait(false);
+#endif
             }
             catch (OperationCanceledException)
             {
@@ -392,7 +398,11 @@ internal sealed class RetentionManager : IDisposable, IAsyncDisposable
             return;
         }
 
+#if NET8_0_OR_GREATER
         await _cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+#else
+        _cancellationTokenSource.Cancel();
+#endif
 
         try
         {

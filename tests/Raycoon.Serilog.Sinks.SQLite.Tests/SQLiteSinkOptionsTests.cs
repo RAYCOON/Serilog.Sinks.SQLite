@@ -354,6 +354,226 @@ public class SQLiteSinkOptionsTests
         act.Should().NotThrow();
     }
 
+    #region MaxLength Validation
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void ValidateWithInvalidMaxMessageLengthShouldThrow(int maxMessageLength)
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            MaxMessageLength = maxMessageLength
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("MaxMessageLength");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void ValidateWithInvalidMaxExceptionLengthShouldThrow(int maxExceptionLength)
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            MaxExceptionLength = maxExceptionLength
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("MaxExceptionLength");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void ValidateWithInvalidMaxPropertiesLengthShouldThrow(int maxPropertiesLength)
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            MaxPropertiesLength = maxPropertiesLength
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("MaxPropertiesLength");
+    }
+
+    [Fact]
+    public void ValidateWithValidMaxLengthsShouldNotThrow()
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            MaxMessageLength = 1000,
+            MaxExceptionLength = 2000,
+            MaxPropertiesLength = 5000
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ValidateWithNullMaxLengthsShouldNotThrow()
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            MaxMessageLength = null,
+            MaxExceptionLength = null,
+            MaxPropertiesLength = null
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().NotThrow();
+    }
+
+    #endregion
+
+    #region CleanupInterval Validation
+
+    [Fact]
+    public void ValidateWithZeroCleanupIntervalShouldThrow()
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            CleanupInterval = TimeSpan.Zero
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("CleanupInterval");
+    }
+
+    [Fact]
+    public void ValidateWithNegativeCleanupIntervalShouldThrow()
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            CleanupInterval = TimeSpan.FromSeconds(-1)
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("CleanupInterval");
+    }
+
+    [Fact]
+    public void ValidateWithValidCleanupIntervalShouldNotThrow()
+    {
+        // Arrange
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = "test.db",
+            CleanupInterval = TimeSpan.FromMinutes(5)
+        };
+
+        // Act & Assert
+        var act = () => options.Validate();
+        act.Should().NotThrow();
+    }
+
+    #endregion
+
+    #region CustomColumn.Validate
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void CustomColumn_ValidateWithInvalidColumnName_ShouldThrow(string? columnName)
+    {
+        // Arrange
+        var column = new CustomColumn
+        {
+            ColumnName = columnName!,
+            PropertyName = "ValidProp"
+        };
+
+        // Act & Assert
+        var act = () => column.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("ColumnName");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void CustomColumn_ValidateWithInvalidPropertyName_ShouldThrow(string? propertyName)
+    {
+        // Arrange
+        var column = new CustomColumn
+        {
+            ColumnName = "ValidCol",
+            PropertyName = propertyName!
+        };
+
+        // Act & Assert
+        var act = () => column.Validate();
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("PropertyName");
+    }
+
+    [Fact]
+    public void CustomColumn_ValidateWithValidValues_ShouldNotThrow()
+    {
+        // Arrange
+        var column = new CustomColumn
+        {
+            ColumnName = "UserId",
+            PropertyName = "UserId",
+            DataType = "TEXT",
+            AllowNull = true,
+            CreateIndex = true
+        };
+
+        // Act & Assert
+        var act = () => column.Validate();
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void CustomColumn_DefaultValues_ShouldBeCorrect()
+    {
+        // Arrange & Act
+        var column = new CustomColumn();
+
+        // Assert
+        column.ColumnName.Should().Be(string.Empty);
+        column.PropertyName.Should().Be(string.Empty);
+        column.DataType.Should().Be("TEXT");
+        column.AllowNull.Should().BeTrue();
+        column.CreateIndex.Should().BeFalse();
+    }
+
+    #endregion
+
     [Fact]
     public void CloneShouldCopyAllProperties()
     {

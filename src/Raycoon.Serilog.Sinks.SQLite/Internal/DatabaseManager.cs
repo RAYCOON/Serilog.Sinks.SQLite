@@ -197,8 +197,8 @@ internal sealed class DatabaseManager : IDisposable
     {
         // Set journal mode (WAL recommended for concurrent access)
         var journalMode = _options.JournalMode.ToString().ToUpperInvariant();
-        await ExecutePragmaAsync(connection, string.Create(CultureInfo.InvariantCulture, $"journal_mode = {journalMode}"), cancellationToken).ConfigureAwait(false);
-        await ExecutePragmaAsync(connection, string.Create(CultureInfo.InvariantCulture, $"synchronous = {(int)_options.SynchronousMode}"), cancellationToken).ConfigureAwait(false);
+        await ExecutePragmaAsync(connection, $"journal_mode = {journalMode}", cancellationToken).ConfigureAwait(false);
+        await ExecutePragmaAsync(connection, $"synchronous = {(int)_options.SynchronousMode}", cancellationToken).ConfigureAwait(false);
         await ExecutePragmaAsync(connection, "temp_store = MEMORY", cancellationToken).ConfigureAwait(false);
         await ExecutePragmaAsync(connection, "mmap_size = 268435456", cancellationToken).ConfigureAwait(false);
         await ExecutePragmaAsync(connection, "cache_size = -64000", cancellationToken).ConfigureAwait(false);
@@ -325,35 +325,35 @@ internal sealed class DatabaseManager : IDisposable
     private string BuildCreateTableSql()
     {
         var sb = new StringBuilder();
-        sb.Append(CultureInfo.InvariantCulture, $"CREATE TABLE IF NOT EXISTS [{_options.TableName}] (");
+        sb.Append($"CREATE TABLE IF NOT EXISTS [{_options.TableName}] (");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.Id}] INTEGER PRIMARY KEY AUTOINCREMENT,");
+        sb.Append($"    [{Columns.Id}] INTEGER PRIMARY KEY AUTOINCREMENT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.Timestamp}] TEXT NOT NULL,");
+        sb.Append($"    [{Columns.Timestamp}] TEXT NOT NULL,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.Level}] INTEGER NOT NULL,");
+        sb.Append($"    [{Columns.Level}] INTEGER NOT NULL,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.LevelName}] TEXT NOT NULL,");
+        sb.Append($"    [{Columns.LevelName}] TEXT NOT NULL,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.Message}] TEXT,");
+        sb.Append($"    [{Columns.Message}] TEXT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.MessageTemplate}] TEXT,");
+        sb.Append($"    [{Columns.MessageTemplate}] TEXT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.Exception}] TEXT,");
+        sb.Append($"    [{Columns.Exception}] TEXT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.Properties}] TEXT,");
+        sb.Append($"    [{Columns.Properties}] TEXT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.SourceContext}] TEXT,");
+        sb.Append($"    [{Columns.SourceContext}] TEXT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.MachineName}] TEXT,");
+        sb.Append($"    [{Columns.MachineName}] TEXT,");
         sb.AppendLine();
-        sb.Append(CultureInfo.InvariantCulture, $"    [{Columns.ThreadId}] INTEGER");
+        sb.Append($"    [{Columns.ThreadId}] INTEGER");
 
         foreach (var column in _options.CustomColumns)
         {
             var nullable = column.AllowNull ? "" : " NOT NULL";
             sb.AppendLine();
-            sb.Append(CultureInfo.InvariantCulture, $"    ,[{column.ColumnName}] {column.DataType}{nullable}");
+            sb.Append($"    ,[{column.ColumnName}] {column.DataType}{nullable}");
         }
 
         sb.AppendLine();
@@ -456,7 +456,7 @@ internal sealed class DatabaseManager : IDisposable
     {
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
         await using var cmd = connection.CreateCommand();
-        cmd.CommandText = string.Create(CultureInfo.InvariantCulture, $"SELECT COUNT(*) FROM [{_options.TableName}]");
+        cmd.CommandText = $"SELECT COUNT(*) FROM [{_options.TableName}]";
 
         var result = await cmd.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         return result is long count ? count : 0;
