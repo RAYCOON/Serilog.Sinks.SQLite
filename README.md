@@ -9,7 +9,7 @@ A modern, high-performance Serilog sink for SQLite databases. Developed for .NET
 ## Features
 
 - **AnyCPU compatible** - Uses `Microsoft.Data.Sqlite` (no native SQLite required)
-- **.NET 8.0, .NET 9.0 & .NET 10.0** support
+- **.NET STANDARD 2.1 .NET 8.0, .NET 9.0 & .NET 10.0** support
 - **Asynchronous batching** - Optimal performance through batch writing
 - **Automatic retention** - By time, count, or database size
 - **Custom columns** - Store structured data in dedicated columns
