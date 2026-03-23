@@ -566,6 +566,49 @@ public sealed class RetentionManagerTests : IDisposable
             "without VACUUM, database file size does not shrink");
     }
 
+    [Fact]
+    public async Task CleanupNowAsync_WithLargeSizeDeletion_TriggersVacuum()
+    {
+        // Arrange - Write >1000 entries so size-based cleanup triggers VACUUM
+        var options = new SQLiteSinkOptions
+        {
+            DatabasePath = _testDbPath,
+            MaxDatabaseSize = 1 // 1 byte - will always trigger cleanup
+        };
+
+        await using var sink = new SQLiteSink(options);
+
+        // Write 1500 entries in batches
+        for (var batch = 0; batch < 3; batch++)
+        {
+            var events = Enumerable.Range(0, 500)
+                .Select(i => new LogEvent(
+                    DateTimeOffset.UtcNow.AddSeconds(batch * 500 + i),
+                    LogEventLevel.Information,
+                    null,
+                    new MessageTemplate($"Message {batch}_{i} with padding to increase size", []),
+                    []))
+                .ToList();
+            await sink.EmitBatchAsync(events);
+        }
+
+        var countBefore = await sink.GetLogCountAsync();
+        countBefore.Should().Be(1500);
+
+        var sizeBefore = await sink.GetDatabaseSizeAsync();
+
+        // Act
+        await sink.CleanupAsync();
+
+        // Assert - VACUUM should reclaim space when >1000 entries are deleted
+        var countAfter = await sink.GetLogCountAsync();
+        countAfter.Should().BeLessThan(countBefore);
+
+        var sizeAfter = await sink.GetDatabaseSizeAsync();
+        sizeAfter.Should().BeLessThan(sizeBefore,
+            "VACUUM should reclaim disk space when >1000 entries are deleted during size-based cleanup");
+    }
+
     #endregion
 
     #region CleanupNowAsync - Actual Deletion Tests

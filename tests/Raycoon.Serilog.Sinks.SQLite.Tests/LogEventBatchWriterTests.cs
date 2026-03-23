@@ -486,6 +486,70 @@ public sealed class LogEventBatchWriterTests : IDisposable
         doc.RootElement.GetProperty("CustomProp").GetString().Should().Be("kept");
     }
 
+    [Fact]
+    public async Task WriteBatchAsync_WithNotNullCustomColumnAndMissingProperty_ThrowsWhenThrowOnErrorTrue()
+    {
+        // Arrange
+        var options = CreateDefaultOptions();
+        options.ThrowOnError = true;
+        options.CustomColumns.Add(new CustomColumn
+        {
+            ColumnName = "RequiredField",
+            DataType = "TEXT",
+            PropertyName = "RequiredField",
+            AllowNull = false
+        });
+        var (dbManager, writer) = CreateWriter(options);
+        using var _ = dbManager;
+        using var __ = writer;
+
+        // Log event WITHOUT the RequiredField property
+        var logEvent = new LogEvent(
+            DateTimeOffset.UtcNow,
+            LogEventLevel.Information,
+            null,
+            new MessageTemplate("Missing required prop", []),
+            []);
+
+        // Act & Assert - NOT NULL constraint violation should propagate
+        var act = async () => await writer.WriteBatchAsync([logEvent]);
+        await act.Should().ThrowAsync<SqliteException>();
+    }
+
+    [Fact]
+    public async Task WriteBatchAsync_WithNotNullCustomColumnAndMissingProperty_InvokesOnErrorCallback()
+    {
+        // Arrange
+        Exception? capturedEx = null;
+        var options = CreateDefaultOptions();
+        options.ThrowOnError = false;
+        options.OnError = ex => capturedEx = ex;
+        options.CustomColumns.Add(new CustomColumn
+        {
+            ColumnName = "RequiredField",
+            DataType = "TEXT",
+            PropertyName = "RequiredField",
+            AllowNull = false
+        });
+        var (dbManager, writer) = CreateWriter(options);
+        using var _ = dbManager;
+        using var __ = writer;
+
+        var logEvent = new LogEvent(
+            DateTimeOffset.UtcNow,
+            LogEventLevel.Information,
+            null,
+            new MessageTemplate("Missing required prop", []),
+            []);
+
+        // Act
+        await writer.WriteBatchAsync([logEvent]);
+
+        // Assert - OnError callback should receive the constraint violation
+        capturedEx.Should().NotBeNull();
+        capturedEx.Should().BeOfType<SqliteException>();
+    }
+
     #endregion
 
     #region Timestamp

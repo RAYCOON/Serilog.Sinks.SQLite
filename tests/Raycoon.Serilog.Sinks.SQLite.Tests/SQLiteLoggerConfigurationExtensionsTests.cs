@@ -308,6 +308,55 @@ public sealed class SQLiteLoggerConfigurationExtensionsTests : IDisposable
         count.Should().Be(1);
     }
 
+    [Fact]
+    public async Task SQLite_WithNonDefaultFlatParameters_AppliesAllCorrectly()
+    {
+        // Arrange & Act - Use flat parameters with non-default values
+        using (var logger = new LoggerConfiguration()
+            .WriteTo.SQLite(
+                _testDbPath,
+                tableName: "FlatParamTest",
+                storePropertiesAsJson: false,
+                storeExceptionDetails: false,
+                maxMessageLength: 20,
+                journalMode: SQLiteJournalMode.Delete,
+                synchronousMode: SQLiteSynchronousMode.Full,
+                batchPeriod: TimeSpan.FromMilliseconds(50))
+            .CreateLogger())
+        {
+            logger.Error(new InvalidOperationException("test error"),
+                "A long message that exceeds twenty characters limit");
+            await Task.Delay(200);
+        }
+
+        await Task.Delay(100);
+
+        // Assert
+        await using var connection = new SqliteConnection($"Data Source={_testDbPath}");
+        await connection.OpenAsync();
+
+        await using var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT Message, Exception, Properties FROM FlatParamTest LIMIT 1";
+        await using var reader = await cmd.ExecuteReaderAsync();
+        (await reader.ReadAsync()).Should().BeTrue();
+
+        // maxMessageLength = 20 should truncate
+        var message = reader.GetString(0);
+        message.Length.Should().BeLessThanOrEqualTo(20);
+
+        // storeExceptionDetails = false should store NULL
+        (await reader.IsDBNullAsync(1)).Should().BeTrue();
+
+        // storePropertiesAsJson = false should store NULL
+        (await reader.IsDBNullAsync(2)).Should().BeTrue();
+
+        // Verify journal mode was applied
+        await using var pragmaCmd = connection.CreateCommand();
+        pragmaCmd.CommandText = "PRAGMA journal_mode";
+        var journalMode = (string)(await pragmaCmd.ExecuteScalarAsync())!;
+        journalMode.Should().BeEquivalentTo("delete");
+    }
+
     public void Dispose()
     {
         if (_disposed)

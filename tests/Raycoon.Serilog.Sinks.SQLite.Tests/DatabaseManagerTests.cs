@@ -22,14 +22,20 @@ public sealed class DatabaseManagerTests : IDisposable
 
     #region PRAGMA Verification
 
-    [Fact]
-    public async Task OpenConnectionAsync_SetsJournalModePragma()
+    [Theory]
+    [InlineData(SQLiteJournalMode.Delete, "delete")]
+    [InlineData(SQLiteJournalMode.Truncate, "truncate")]
+    [InlineData(SQLiteJournalMode.Persist, "persist")]
+    [InlineData(SQLiteJournalMode.Memory, "memory")]
+    [InlineData(SQLiteJournalMode.Wal, "wal")]
+    [InlineData(SQLiteJournalMode.Off, "off")]
+    public async Task OpenConnectionAsync_SetsJournalModePragma(SQLiteJournalMode journalMode, string expected)
     {
         // Arrange
         var options = new SQLiteSinkOptions
         {
             DatabasePath = _testDbPath,
-            JournalMode = SQLiteJournalMode.Delete
+            JournalMode = journalMode
         };
         using var dbManager = new DatabaseManager(options);
 
@@ -40,17 +46,21 @@ public sealed class DatabaseManagerTests : IDisposable
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = "PRAGMA journal_mode";
         var result = (string)(await cmd.ExecuteScalarAsync())!;
-        result.Should().BeEquivalentTo("delete");
+        result.Should().BeEquivalentTo(expected);
     }
 
-    [Fact]
-    public async Task OpenConnectionAsync_SetsSynchronousModePragma()
+    [Theory]
+    [InlineData(SQLiteSynchronousMode.Off, 0L)]
+    [InlineData(SQLiteSynchronousMode.Normal, 1L)]
+    [InlineData(SQLiteSynchronousMode.Full, 2L)]
+    [InlineData(SQLiteSynchronousMode.Extra, 3L)]
+    public async Task OpenConnectionAsync_SetsSynchronousModePragma(SQLiteSynchronousMode syncMode, long expected)
     {
         // Arrange
         var options = new SQLiteSinkOptions
         {
             DatabasePath = _testDbPath,
-            SynchronousMode = SQLiteSynchronousMode.Full
+            SynchronousMode = syncMode
         };
         using var dbManager = new DatabaseManager(options);
 
@@ -61,7 +71,7 @@ public sealed class DatabaseManagerTests : IDisposable
         await using var cmd = connection.CreateCommand();
         cmd.CommandText = "PRAGMA synchronous";
         var result = Convert.ToInt64(await cmd.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
-        result.Should().Be(2); // Full = 2
+        result.Should().Be(expected);
     }
 
     [Fact]
