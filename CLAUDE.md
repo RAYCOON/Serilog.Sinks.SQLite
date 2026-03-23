@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Raycoon.Serilog.Sinks.SQLite is a high-performance Serilog sink for SQLite databases. Key differentiators:
 - Uses `Microsoft.Data.Sqlite` for AnyCPU compatibility (not System.Data.SQLite)
-- Targets .NET Standard 2.1, .NET 8.0, 9.0, and 10.0
+- Targets .NET 8.0, 9.0, and 10.0
 - Async batching via Serilog.Sinks.PeriodicBatching
 - Retention policies (time, count, size-based)
 - Custom columns support

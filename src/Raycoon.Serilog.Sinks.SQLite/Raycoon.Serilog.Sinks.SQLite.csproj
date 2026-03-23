@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <RootNamespace>Serilog</RootNamespace>
     <AssemblyName>Raycoon.Serilog.Sinks.SQLite</AssemblyName>
 
@@ -15,70 +15,25 @@
     <!-- CA2100: SQL Injection - SQL is built from internal options, not user input -->
     <NoWarn>$(NoWarn);CA2007;CA1031;CA1305;CA2227;CA1805;CA1002;CA2100</NoWarn>
 
-    <!-- NuGet Package Identification -->
+    <!-- NuGet Package -->
     <PackageId>Raycoon.Serilog.Sinks.SQLite</PackageId>
-    <Version>1.2.0</Version>
-    <Authors>Daniel Pavic</Authors>
-    <Company>RAYCOON.com GmbH</Company>
-    <Copyright>Copyright (c) 2025- RAYCOON.com GmbH</Copyright>
-
-    <!-- Package Description -->
-    <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET Core 3.0+ and .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
-    <PackageDescription>$(Description)</PackageDescription>
+    <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
     <PackageTags>serilog;sqlite;logging;sink;database;structured-logging;batching;retention</PackageTags>
     <PackageReleaseNotes>Add JSON configuration support</PackageReleaseNotes>
-
-    <!-- Package URLs -->
-    <PackageProjectUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-
-    <!-- License -->
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-
-    <!-- Package Content -->
-    <PackageReadmeFile>README.md</PackageReadmeFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <!-- Signing (optional) -->
     <SignAssembly>false</SignAssembly>
-
-    <!-- Deterministic builds -->
-    <Deterministic>true</Deterministic>
-    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" Condition="Exists('..\..\LICENSE')" />
-  </ItemGroup>
 
   <!-- Dependencies -->
   <ItemGroup>
-    <PackageReference Include="Serilog" Version="4.3.1" />
-    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="5.0.0" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" />
   </ItemGroup>
 
-  <!-- netstandard2.1 specific dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="7.0.20" />
-  </ItemGroup>
-
-  <!-- .NET 8 specific dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" />
-  </ItemGroup>
-
-  <!-- .NET 9 specific dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" />
-  </ItemGroup>
-
-  <!-- .NET 10 specific dependencies -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.5" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>
 
   <!-- Internals visible to tests -->

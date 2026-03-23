@@ -1,5 +1,8 @@
 <Project>
   <PropertyGroup>
+    <SerilogSinksSqliteVersion>1.2.1</SerilogSinksSqliteVersion>
+    <Version>$(SerilogSinksSqliteVersion)</Version>
+
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -9,16 +12,29 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-all</AnalysisLevel>
-    
+    <DebugType>embedded</DebugType>
+
+    <!-- Deterministic builds -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
     <!-- Package-Metadaten -->
-    <Authors>Daniel Pavic</Authors>
+    <Authors>Daniel Pavic (RAYCOON.com GmbH)</Authors>
     <Company>RAYCOON.com GmbH</Company>
-    <Copyright>Copyright (c) 2025- RAYCOON.com GmbH</Copyright>
+    <Copyright>Copyright (c) 2025-$([System.DateTime]::Now.Year) RAYCOON.com GmbH</Copyright>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite.git</RepositoryUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/RAYCOON/Serilog.Sinks.SQLite</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>serilog;sqlite;logging;sink;database</PackageTags>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <!-- Include LICENSE and README in all NuGet packages -->
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="" />
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 </Project>

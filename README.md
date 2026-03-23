@@ -2,14 +2,14 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Raycoon.Serilog.Sinks.SQLite.svg)](https://www.nuget.org/packages/Raycoon.Serilog.Sinks.SQLite)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-Standard%202.1%20%7C%208.0%20%7C%209.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
 
-A modern, high-performance Serilog sink for SQLite databases. Built for .NET Standard 2.1 and .NET 8+ with full **AnyCPU** support.
+A modern, high-performance Serilog sink for SQLite databases. Built for .NET 8+ with full **AnyCPU** support.
 
 ## Features
 
 - **AnyCPU compatible** - Uses `Microsoft.Data.Sqlite` (no native SQLite required)
-- **.NET Standard 2.1, .NET 8.0, 9.0 & 10.0** support
+- **.NET 8.0, 9.0 & 10.0** support
 - **Asynchronous batching** - Optimal performance through batch writing
 - **Automatic retention** - By time, count, or database size
 - **Custom columns** - Store structured data in dedicated columns
@@ -409,11 +409,11 @@ options.QueueLimit = 100000;
 | Feature | Raycoon.Serilog.Sinks.SQLite | Serilog.Sinks.SQLite |
 |---------|----------------------------|---------------------|
 | AnyCPU Support | Yes (Microsoft.Data.Sqlite) | No (System.Data.SQLite) |
-| .NET Support | .NET Standard 2.1 / 8 / 9 / 10 | Partial (.NET 7 only) |
+| .NET Support | .NET 8 / 9 / 10 | .NET Standard 2.0 / 7 (last update 2023) |
 | Async Batching | Yes | Yes |
-| Retention Policies | Yes (time, count, size) | No |
+| Retention Policies | Yes (time, count, size) | Partial (time, size) |
 | Custom Columns | Yes | No |
-| WAL Mode | Yes | Yes |
+| WAL Mode | Yes | No |
 
 ## API Reference
 
