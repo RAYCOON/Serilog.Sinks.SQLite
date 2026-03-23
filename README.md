@@ -2,14 +2,14 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Raycoon.Serilog.Sinks.SQLite.svg)](https://www.nuget.org/packages/Raycoon.Serilog.Sinks.SQLite)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-8.0%20%7C%209.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-Standard%202.1%20%7C%208.0%20%7C%209.0%20%7C%2010.0-512BD4)](https://dotnet.microsoft.com/)
 
-A modern, high-performance Serilog sink for SQLite databases. Developed for .NET 8+ with full **AnyCPU** support.
+A modern, high-performance Serilog sink for SQLite databases. Built for .NET Standard 2.1 and .NET 8+ with full **AnyCPU** support.
 
 ## Features
 
 - **AnyCPU compatible** - Uses `Microsoft.Data.Sqlite` (no native SQLite required)
-- **.NET STANDARD 2.1 .NET 8.0, .NET 9.0 & .NET 10.0** support
+- **.NET Standard 2.1, .NET 8.0, 9.0 & 10.0** support
 - **Asynchronous batching** - Optimal performance through batch writing
 - **Automatic retention** - By time, count, or database size
 - **Custom columns** - Store structured data in dedicated columns
@@ -409,7 +409,7 @@ options.QueueLimit = 100000;
 | Feature | Raycoon.Serilog.Sinks.SQLite | Serilog.Sinks.SQLite |
 |---------|----------------------------|---------------------|
 | AnyCPU Support | Yes (Microsoft.Data.Sqlite) | No (System.Data.SQLite) |
-| .NET 8/9/10 | Yes | Partial (.NET 7 only) |
+| .NET Support | .NET Standard 2.1 / 8 / 9 / 10 | Partial (.NET 7 only) |
 | Async Batching | Yes | Yes |
 | Retention Policies | Yes (time, count, size) | No |
 | Custom Columns | Yes | No |
@@ -467,7 +467,30 @@ options.QueueLimit = 100000;
 |----------|------|---------|-------------|
 | `JournalMode` | SQLiteJournalMode | Wal | SQLite journal mode (Wal recommended) |
 | `SynchronousMode` | SQLiteSynchronousMode | Normal | SQLite synchronous mode |
-| `AdditionalConnectionParameters` | Dictionary | {} | Extra SQLite connection string parameters |
+| `AdditionalConnectionParameters` | IDictionary<string, string> | {} | Extra SQLite connection string parameters |
+
+#### Error Handling
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `OnError` | Action\<Exception\>? | null | Callback invoked on write errors |
+| `ThrowOnError` | bool | false | Throw exceptions on write errors (false = suppress) |
+
+#### Custom Columns
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `CustomColumns` | Collection\<CustomColumn\> | [] | Custom columns mapped from log event properties |
+
+**CustomColumn Properties:**
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `ColumnName` | string | "" | Name of the database column |
+| `DataType` | string | "TEXT" | SQLite data type (TEXT, INTEGER, REAL, BLOB) |
+| `PropertyName` | string | "" | Serilog property to extract the value from |
+| `AllowNull` | bool | true | Allow NULL values in the column |
+| `CreateIndex` | bool | false | Create an index on this column |
 
 ## License
 

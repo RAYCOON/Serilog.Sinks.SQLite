@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Raycoon.Serilog.Sinks.SQLite is a high-performance Serilog sink for SQLite databases. Key differentiators:
 - Uses `Microsoft.Data.Sqlite` for AnyCPU compatibility (not System.Data.SQLite)
-- Targets .NET 8.0, 9.0, and 10.0
+- Targets .NET Standard 2.1, .NET 8.0, 9.0, and 10.0
 - Async batching via Serilog.Sinks.PeriodicBatching
 - Retention policies (time, count, size-based)
 - Custom columns support
@@ -59,6 +59,10 @@ src/Raycoon.Serilog.Sinks.SQLite/
 - Suppressed analyzer warnings (library-specific):
   - CA2007: ConfigureAwait (library uses `ConfigureAwait(false)` where needed)
   - CA1031: Catch generic exceptions (logging sink must be robust)
+  - CA1305: IFormatProvider (internal SQL strings are culture-independent)
+  - CA2227: Collection properties (options pattern requires settable collections)
+  - CA1805: Explicit default initialization (improves readability)
+  - CA1002: Collection\<T\> vs List\<T\> (Collection is already used)
   - CA2100: SQL injection (SQL built from internal options, not user input)
 - Code-Documentation in english
 
