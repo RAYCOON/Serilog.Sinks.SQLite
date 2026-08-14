@@ -44,7 +44,7 @@ src/Raycoon.Serilog.Sinks.SQLite/
 
 ## Testing
 
-- Framework: xUnit with FluentAssertions and NSubstitute
+- Framework: xUnit with AwesomeAssertions (Apache-2.0 fork of FluentAssertions) and NSubstitute
 - Code coverage via Coverlet
 - Tests run against all target frameworks (net8.0, net9.0, net10.0)
 - Test naming convention: underscores allowed (CA1707 suppressed)
