@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <SerilogSinksSqliteVersion>1.2.1</SerilogSinksSqliteVersion>
+    <SerilogSinksSqliteVersion>1.2.2</SerilogSinksSqliteVersion>
     <Version>$(SerilogSinksSqliteVersion)</Version>
 
     <LangVersion>latest</LangVersion>

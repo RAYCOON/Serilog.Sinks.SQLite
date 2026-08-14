@@ -19,7 +19,7 @@
     <PackageId>Raycoon.Serilog.Sinks.SQLite</PackageId>
     <Description>A modern, high-performance Serilog sink that writes log events to SQLite databases. Features include async batching, retention policies (time/count/size), custom columns, and WAL mode support. Built for .NET 8+ with AnyCPU compatibility using Microsoft.Data.Sqlite.</Description>
     <PackageTags>serilog;sqlite;logging;sink;database;structured-logging;batching;retention</PackageTags>
-    <PackageReleaseNotes>Add JSON configuration support</PackageReleaseNotes>
+    <PackageReleaseNotes>Security: raises the Microsoft.Data.Sqlite floor to 10.0.11, so consumers no longer resolve SQLitePCLRaw 2.1.11 (GHSA-2m69-gcr7-jv3q, high severity). Also raises the Serilog floor to 4.4.0. No API or behaviour changes.</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 
     <!-- Signing (optional) -->
