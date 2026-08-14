@@ -356,8 +356,10 @@ Console.WriteLine($"  Throughput: {messageCount / stopwatch.Elapsed.TotalSeconds
 Console.WriteLine("Example 5: Full JSON Configuration (appsettings.json)");
 Console.WriteLine(new string('-', 40));
 
+// Resolve appsettings.json next to the app binary, where the csproj copies it,
+// so the sample runs from any working directory (e.g. `dotnet run` from the repo root).
 var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
+    .SetBasePath(AppContext.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .Build();
 
