@@ -44,10 +44,14 @@ src/Raycoon.Serilog.Sinks.SQLite/
 
 ## Testing
 
-- Framework: xUnit with AwesomeAssertions (Apache-2.0 fork of FluentAssertions) and NSubstitute
+- Framework: xUnit v3 with AwesomeAssertions (Apache-2.0 fork of FluentAssertions)
+- Test project is a stand-alone executable (`OutputType=Exe`), required by xUnit v3 — it can
+  be run directly as well as via `dotnet test`
+- Runner: VSTest (Microsoft.NET.Test.Sdk + xunit.runner.visualstudio), not Microsoft.Testing.Platform
 - Code coverage via Coverlet
 - Tests run against all target frameworks (net8.0, net9.0, net10.0)
 - Test naming convention: underscores allowed (CA1707 suppressed)
+- xUnit1051 suppressed: tests do not thread `TestContext.Current.CancellationToken` through calls
 - Internal classes accessible via `InternalsVisibleTo`
 
 ## Code Style
